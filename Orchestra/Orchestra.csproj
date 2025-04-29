@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Orchestra.ServiceDefaults\Orchestra.ServiceDefaults.csproj" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
   </ItemGroup>
 
 </Project>
