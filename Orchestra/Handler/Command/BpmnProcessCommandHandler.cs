@@ -5,7 +5,7 @@ using Orchestra.Models;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace Orchestra.Handler
+namespace Orchestra.Handler.Command
 {
     public class BpmnProcessCommandHandler : IRequestHandler<BpmnProcessCommand, BpmnProcess>
     {

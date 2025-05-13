@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Orchestra.Dtos;
 using Orchestra.Handler;
+using Orchestra.Handler.Command;
+using Orchestra.Handler.Querry;
+using Orchestra.Handler.Querry.GetById;
 using System.Xml.Linq;
 
 namespace Orchestra.Controllers
@@ -31,10 +34,24 @@ namespace Orchestra.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
         {
-            // Implemente o GetById se quiser retornar depois
-            return Ok();
+            var query = new GetBpmnProcessByIdQuery(id);
+            var result = await _mediator.Send(query, cancellationToken);
+
+            if (result == null)
+                return NotFound();
+
+            return Ok(result);
         }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+        {
+            var query = new GetAllBpmnProcessesQuery();
+            var result = await _mediator.Send(query, cancellationToken);
+            return Ok(result);
+        }
+
     }
 }

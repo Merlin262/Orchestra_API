@@ -5,6 +5,15 @@ using Orchestra.Data.Context;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost3000",
+        policy => policy
+            .WithOrigins("http://localhost:3000")
+            .AllowAnyHeader()
+            .AllowAnyMethod());
+});
+
 // Configurações de serviços
 builder.AddServiceDefaults();
 
@@ -28,8 +37,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Add MediatR services
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
+// Adicione esta linha para registrar o repositório
+builder.Services.AddScoped<Orchestra.Repoitories.IBpmnProcessRepository, Orchestra.Repoitories.BpmnProcessRepository>();
+
+
 // Build do app (deve vir depois da configuração de serviços)
 var app = builder.Build();
+
+app.UseCors("AllowLocalhost3000");
 
 // Pipeline de requisições
 app.MapDefaultEndpoints();
