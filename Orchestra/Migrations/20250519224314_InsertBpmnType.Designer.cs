@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Orchestra.Data.Context;
 
@@ -11,9 +12,11 @@ using Orchestra.Data.Context;
 namespace Orchestra.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250519224314_InsertBpmnType")]
+    partial class InsertBpmnType
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -71,9 +74,6 @@ namespace Orchestra.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("BpmnItemId")
-                        .HasColumnType("int");
-
                     b.Property<int>("BpmnProcessId")
                         .HasColumnType("int");
 
@@ -85,9 +85,11 @@ namespace Orchestra.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("Id");
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.HasIndex("BpmnItemId");
+                    b.HasKey("Id");
 
                     b.HasIndex("BpmnProcessId");
 
@@ -96,19 +98,11 @@ namespace Orchestra.Migrations
 
             modelBuilder.Entity("Orchestra.Models.ProcessStep", b =>
                 {
-                    b.HasOne("Orchestra.Models.BpmnItem", "BpmnItem")
-                        .WithMany()
-                        .HasForeignKey("BpmnItemId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Orchestra.Models.BpmnProcess", "BpmnProcess")
                         .WithMany()
                         .HasForeignKey("BpmnProcessId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("BpmnItem");
 
                     b.Navigation("BpmnProcess");
                 });

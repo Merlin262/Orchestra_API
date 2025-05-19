@@ -7,9 +7,8 @@
         public string Name { get; set; } = null!;
         public string Type { get; set; } = null!; // Ex: StartEvent, Task, Gateway
 
-        public int BpmnProcessId { get; set; } // Chave estrangeira
-        public BpmnProcess BpmnProcess { get; set; } = null!; // Propriedade de navegação
+        public int BpmnProcessId { get; set; } 
+        public string ResponsibleUserId { get; set; } = null!;
+        public BpmnProcess BpmnProcess { get; set; } = null!; 
     }
-
-
 }

@@ -58,7 +58,7 @@ namespace Orchestra.Handler.Command
                         Id = Guid.NewGuid(),
                         BpmnId = element.Attribute("id")?.Value ?? Guid.NewGuid().ToString(),
                         Name = element.Attribute("name")?.Value ?? type,
-                        Type = type,
+                        //Type = type,
                         BpmnProcessId = bpmnProcessId
                     };
                     steps.Add(step);
