@@ -3,7 +3,7 @@ using Orchestra.Models;
 
 namespace Orchestra.Handler.Querry.GetById
 {
-    public class GetBpmnProcessByIdQuery : IRequest<BpmnProcess?>
+    public class GetBpmnProcessByIdQuery : IRequest<BpmnProcessBaseline?>
     {
         public int Id { get; }
 

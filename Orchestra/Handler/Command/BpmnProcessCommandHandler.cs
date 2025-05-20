@@ -7,14 +7,14 @@ using System.Xml.Linq;
 
 namespace Orchestra.Handler.Command
 {
-    public class BpmnProcessCommandHandler : IRequestHandler<BpmnProcessCommand, BpmnProcess>
+    public class BpmnProcessCommandHandler : IRequestHandler<BpmnProcessCommand, BpmnProcessBaseline>
     {
         private readonly ApplicationDbContext _context;
         public BpmnProcessCommandHandler(ApplicationDbContext dbContext)
         {
             _context = dbContext;
         }
-        public async Task<BpmnProcess> Handle(BpmnProcessCommand request, CancellationToken cancellationToken)
+        public async Task<BpmnProcessBaseline> Handle(BpmnProcessCommand request, CancellationToken cancellationToken)
         {
             string xmlContent;
             using (var reader = new StreamReader(request.File.OpenReadStream()))
@@ -22,7 +22,7 @@ namespace Orchestra.Handler.Command
                 xmlContent = await reader.ReadToEndAsync();
             }
 
-            var process = new BpmnProcess
+            var process = new BpmnProcessBaseline
             {
                 Name = request.Name,
                 XmlContent = xmlContent,

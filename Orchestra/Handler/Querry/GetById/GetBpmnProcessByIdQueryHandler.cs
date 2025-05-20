@@ -4,7 +4,7 @@ using Orchestra.Repoitories;
 
 namespace Orchestra.Handler.Querry.GetById
 {
-    public class GetBpmnProcessByIdQueryHandler : IRequestHandler<GetBpmnProcessByIdQuery, BpmnProcess?>
+    public class GetBpmnProcessByIdQueryHandler : IRequestHandler<GetBpmnProcessByIdQuery, BpmnProcessBaseline?>
     {
         private readonly IBpmnProcessRepository _repository;
 
@@ -13,7 +13,7 @@ namespace Orchestra.Handler.Querry.GetById
             _repository = repository;
         }
 
-        public async Task<BpmnProcess?> Handle(GetBpmnProcessByIdQuery request, CancellationToken cancellationToken)
+        public async Task<BpmnProcessBaseline?> Handle(GetBpmnProcessByIdQuery request, CancellationToken cancellationToken)
         {
             return await _repository.GetByIdAsync(request.Id, cancellationToken);
         }

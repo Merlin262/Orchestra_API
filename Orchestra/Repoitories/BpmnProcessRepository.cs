@@ -3,7 +3,7 @@ using Orchestra.Models;
 
 namespace Orchestra.Repoitories
 {
-    public class BpmnProcessRepository : GenericRepository<BpmnProcess>, IBpmnProcessRepository
+    public class BpmnProcessRepository : GenericRepository<BpmnProcessBaseline>, IBpmnProcessRepository
     {
         public BpmnProcessRepository(ApplicationDbContext context) : base(context)
         {
