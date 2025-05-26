@@ -1,11 +1,16 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Orchestra.Models;
+using Orchestra.Models.Orchestra.Models;
 
 namespace Orchestra.Data.Context
 {
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
     {
-        public DbSet<BpmnProcess> BpmnProcess => Set<BpmnProcess>();
+        public DbSet<BpmnProcessBaseline> BpmnProcess => Set<BpmnProcessBaseline>();
         public DbSet<ProcessStep> ProcessStep => Set<ProcessStep>();
+        public DbSet<BpmnItem> BpmnItem => Set<BpmnItem>();
+        public DbSet<BpmnProcessInstance> bpmnProcessInstances => Set<BpmnProcessInstance>();
+        public DbSet<User> Users => Set<User>();
+        public DbSet<Tasks> Tasks => Set<Tasks>();
     }
 }

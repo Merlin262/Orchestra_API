@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Orchestra.Data.Context;
 
@@ -11,9 +12,11 @@ using Orchestra.Data.Context;
 namespace Orchestra.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250520015033_AddInstance")]
+    partial class AddInstance
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -101,14 +104,12 @@ namespace Orchestra.Migrations
                     b.Property<int>("BpmnProcessId")
                         .HasColumnType("int");
 
-                    b.Property<string>("LastStepId")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("NextStepId")
+                    b.Property<string>("ResponsibleUserId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Type")
@@ -117,82 +118,9 @@ namespace Orchestra.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ProcessStep");
-                });
-
-            modelBuilder.Entity("Orchestra.Models.Tasks", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("BpmnProcessId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Comments")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("CompletedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<Guid>("ProcessStepId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("ResponsibleUserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("XmlTaskId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
                     b.HasIndex("BpmnProcessId");
 
-                    b.HasIndex("ProcessStepId");
-
-                    b.HasIndex("ResponsibleUserId");
-
-                    b.ToTable("Tasks");
-                });
-
-            modelBuilder.Entity("Orchestra.Models.User", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Role")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Users");
+                    b.ToTable("ProcessStep");
                 });
 
             modelBuilder.Entity("Orchestra.Models.Orchestra.Models.BpmnProcessInstance", b =>
@@ -206,34 +134,15 @@ namespace Orchestra.Migrations
                     b.Navigation("BpmnProcessBaseline");
                 });
 
-            modelBuilder.Entity("Orchestra.Models.Tasks", b =>
+            modelBuilder.Entity("Orchestra.Models.ProcessStep", b =>
                 {
-                    b.HasOne("Orchestra.Models.Orchestra.Models.BpmnProcessInstance", "BpmnProcess")
+                    b.HasOne("Orchestra.Models.BpmnProcessBaseline", "BpmnProcess")
                         .WithMany()
                         .HasForeignKey("BpmnProcessId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Orchestra.Models.ProcessStep", "ProcessStep")
-                        .WithMany()
-                        .HasForeignKey("ProcessStepId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Orchestra.Models.User", "ResponsibleUser")
-                        .WithMany("AssignedTasks")
-                        .HasForeignKey("ResponsibleUserId");
-
                     b.Navigation("BpmnProcess");
-
-                    b.Navigation("ProcessStep");
-
-                    b.Navigation("ResponsibleUser");
-                });
-
-            modelBuilder.Entity("Orchestra.Models.User", b =>
-                {
-                    b.Navigation("AssignedTasks");
                 });
 #pragma warning restore 612, 618
         }

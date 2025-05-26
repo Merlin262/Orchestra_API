@@ -3,7 +3,7 @@ using Orchestra.Models;
 
 namespace Orchestra.Handler.Querry
 {
-    public class GetAllBpmnProcessesQuery : IRequest<IEnumerable<BpmnProcess>>
+    public class GetAllBpmnProcessesQuery : IRequest<IEnumerable<BpmnProcessBaseline>>
     {
     }
 }

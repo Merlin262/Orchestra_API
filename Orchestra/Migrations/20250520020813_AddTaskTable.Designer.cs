@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Orchestra.Data.Context;
 
@@ -11,9 +12,11 @@ using Orchestra.Data.Context;
 namespace Orchestra.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250520020813_AddTaskTable")]
+    partial class AddTaskTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -102,6 +105,7 @@ namespace Orchestra.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("LastStepId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
@@ -109,6 +113,7 @@ namespace Orchestra.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NextStepId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Type")
@@ -142,13 +147,10 @@ namespace Orchestra.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("ResponsibleUserId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("XmlTaskId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -221,19 +223,16 @@ namespace Orchestra.Migrations
                         .IsRequired();
 
                     b.HasOne("Orchestra.Models.User", "ResponsibleUser")
-                        .WithMany("AssignedTasks")
-                        .HasForeignKey("ResponsibleUserId");
+                        .WithMany()
+                        .HasForeignKey("ResponsibleUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("BpmnProcess");
 
                     b.Navigation("ProcessStep");
 
                     b.Navigation("ResponsibleUser");
-                });
-
-            modelBuilder.Entity("Orchestra.Models.User", b =>
-                {
-                    b.Navigation("AssignedTasks");
                 });
 #pragma warning restore 612, 618
         }

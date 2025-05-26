@@ -2,7 +2,7 @@
 
 namespace Orchestra.Repoitories
 {
-    public interface IBpmnProcessRepository : IGenericRepository<BpmnProcess>
+    public interface IBpmnProcessRepository : IGenericRepository<BpmnProcessBaseline>
     {
     }
 }

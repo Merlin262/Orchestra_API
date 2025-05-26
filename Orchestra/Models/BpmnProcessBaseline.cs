@@ -1,6 +1,6 @@
 ﻿namespace Orchestra.Models
 {
-    public class BpmnProcess
+    public class BpmnProcessBaseline
     {
         public int Id { get; set; }
         public string? Name { get; set; }

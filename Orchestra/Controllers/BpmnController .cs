@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Orchestra.Dtos;
 using Orchestra.Handler;
 using Orchestra.Handler.Command;
+using Orchestra.Handler.Command.DeleteBpmnProcessBaselineCommand;
+using Orchestra.Handler.Command.UploadBpmnProcessCommand;
 using Orchestra.Handler.Querry;
 using Orchestra.Handler.Querry.GetById;
 using System.Xml.Linq;
@@ -28,7 +30,12 @@ namespace Orchestra.Controllers
             if (request.File == null || request.File.Length == 0)
                 return BadRequest("Arquivo inválido.");
 
-            var command = new BpmnProcessCommand(request.Name, request.File);
+            var command = new BpmnProcessCommand
+            {
+                //Name = request.Name,
+                File = request.File
+            };
+
             var result = await _mediator.Send(command, cancellationToken);
             return Ok(result);
         }
@@ -53,5 +60,16 @@ namespace Orchestra.Controllers
             return Ok(result);
         }
 
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+        {
+            var command = new DeleteBpmnProcessBaselineCommand(id);
+            var result = await _mediator.Send(command, cancellationToken);
+
+            if (!result)
+                return NotFound();
+
+            return NoContent();
+        }
     }
 }

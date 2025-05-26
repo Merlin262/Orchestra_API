@@ -5,16 +5,17 @@ using Orchestra.Models;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace Orchestra.Handler.Command
+namespace Orchestra.Handler.Command.UploadBpmnProcessCommand
 {
-    public class BpmnProcessCommandHandler : IRequestHandler<BpmnProcessCommand, BpmnProcess>
+    public class BpmnProcessCommandHandler : IRequestHandler<BpmnProcessCommand, BpmnProcessBaseline>
     {
         private readonly ApplicationDbContext _context;
         public BpmnProcessCommandHandler(ApplicationDbContext dbContext)
         {
             _context = dbContext;
         }
-        public async Task<BpmnProcess> Handle(BpmnProcessCommand request, CancellationToken cancellationToken)
+
+        public async Task<BpmnProcessBaseline> Handle(BpmnProcessCommand request, CancellationToken cancellationToken)
         {
             string xmlContent;
             using (var reader = new StreamReader(request.File.OpenReadStream()))
@@ -22,9 +23,11 @@ namespace Orchestra.Handler.Command
                 xmlContent = await reader.ReadToEndAsync();
             }
 
-            var process = new BpmnProcess
+            string? processName = ExtractProcessNameFromXml(xmlContent);
+
+            var process = new BpmnProcessBaseline
             {
-                Name = request.Name,
+                Name = processName,
                 XmlContent = xmlContent,
                 CreatedAt = DateTime.UtcNow
             };
@@ -36,7 +39,20 @@ namespace Orchestra.Handler.Command
 
             return process;
         }
-
+        private string? ExtractProcessNameFromXml(string xmlContent)
+        {
+            try
+            {
+                var xDoc = XDocument.Parse(xmlContent);
+                XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
+                var processElement = xDoc.Descendants(bpmn + "process").LastOrDefault();
+                return processElement?.Attribute("name")?.Value;
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         public async Task ParseAndSaveSteps(string xmlContent, int bpmnProcessId, CancellationToken cancellationToken)
         {
