@@ -7,7 +7,7 @@
         public string Name { get; set; } = null!;
         public string Type { get; set; } = null!;
         public int BpmnProcessId { get; set; }
-        public string NextStepId { get; set; }
-        public string LastStepId { get; set; }
+        public string? NextStepId { get; set; }
+        public string? LastStepId { get; set; }
     }
 }

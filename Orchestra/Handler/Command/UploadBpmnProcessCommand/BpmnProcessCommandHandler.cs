@@ -5,7 +5,7 @@ using Orchestra.Models;
 using System.Xml;
 using System.Xml.Linq;
 
-namespace Orchestra.Handler.Command
+namespace Orchestra.Handler.Command.UploadBpmnProcessCommand
 {
     public class BpmnProcessCommandHandler : IRequestHandler<BpmnProcessCommand, BpmnProcessBaseline>
     {
@@ -14,6 +14,7 @@ namespace Orchestra.Handler.Command
         {
             _context = dbContext;
         }
+
         public async Task<BpmnProcessBaseline> Handle(BpmnProcessCommand request, CancellationToken cancellationToken)
         {
             string xmlContent;
@@ -22,9 +23,11 @@ namespace Orchestra.Handler.Command
                 xmlContent = await reader.ReadToEndAsync();
             }
 
+            string? processName = ExtractProcessNameFromXml(xmlContent);
+
             var process = new BpmnProcessBaseline
             {
-                Name = request.Name,
+                Name = processName,
                 XmlContent = xmlContent,
                 CreatedAt = DateTime.UtcNow
             };
@@ -36,7 +39,20 @@ namespace Orchestra.Handler.Command
 
             return process;
         }
-
+        private string? ExtractProcessNameFromXml(string xmlContent)
+        {
+            try
+            {
+                var xDoc = XDocument.Parse(xmlContent);
+                XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
+                var processElement = xDoc.Descendants(bpmn + "process").LastOrDefault();
+                return processElement?.Attribute("name")?.Value;
+            }
+            catch
+            {
+                return null;
+            }
+        }
 
         public async Task ParseAndSaveSteps(string xmlContent, int bpmnProcessId, CancellationToken cancellationToken)
         {
@@ -58,7 +74,7 @@ namespace Orchestra.Handler.Command
                         Id = Guid.NewGuid(),
                         BpmnId = element.Attribute("id")?.Value ?? Guid.NewGuid().ToString(),
                         Name = element.Attribute("name")?.Value ?? type,
-                        //Type = type,
+                        Type = type,
                         BpmnProcessId = bpmnProcessId
                     };
                     steps.Add(step);
