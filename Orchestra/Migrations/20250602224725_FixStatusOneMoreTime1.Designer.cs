@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Orchestra.Data.Context;
 
@@ -11,9 +12,11 @@ using Orchestra.Data.Context;
 namespace Orchestra.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250602224725_FixStatusOneMoreTime1")]
+    partial class FixStatusOneMoreTime1
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -222,9 +225,6 @@ namespace Orchestra.Migrations
                     b.Property<string>("ResponsibleUserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("StatusId")
-                        .HasColumnType("int");
-
                     b.Property<string>("XmlTaskId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -236,8 +236,6 @@ namespace Orchestra.Migrations
                     b.HasIndex("ProcessStepId");
 
                     b.HasIndex("ResponsibleUserId");
-
-                    b.HasIndex("StatusId");
 
                     b.ToTable("Tasks");
                 });
@@ -321,7 +319,7 @@ namespace Orchestra.Migrations
                     b.HasOne("Orchestra.Models.Status", "Status")
                         .WithMany()
                         .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Orchestra.Models.Tasks", "Task")
@@ -353,19 +351,11 @@ namespace Orchestra.Migrations
                         .WithMany("AssignedTasks")
                         .HasForeignKey("ResponsibleUserId");
 
-                    b.HasOne("Orchestra.Models.Status", "Status")
-                        .WithMany()
-                        .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("BpmnProcess");
 
                     b.Navigation("ProcessStep");
 
                     b.Navigation("ResponsibleUser");
-
-                    b.Navigation("Status");
                 });
 
             modelBuilder.Entity("Orchestra.Models.User", b =>

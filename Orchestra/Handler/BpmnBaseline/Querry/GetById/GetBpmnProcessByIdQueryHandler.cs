@@ -2,7 +2,7 @@
 using Orchestra.Models;
 using Orchestra.Repoitories;
 
-namespace Orchestra.Handler.Querry.GetById
+namespace Orchestra.Handler.BpmnBaseline.Querry.GetById
 {
     public class GetBpmnProcessByIdQueryHandler : IRequestHandler<GetBpmnProcessByIdQuery, BpmnProcessBaseline?>
     {

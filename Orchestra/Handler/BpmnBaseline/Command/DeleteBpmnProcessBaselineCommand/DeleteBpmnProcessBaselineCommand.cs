@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace Orchestra.Handler.Command.DeleteBpmnProcessBaselineCommand
+namespace Orchestra.Handler.BpmnBaseline.Command.DeleteBpmnProcessBaselineCommand
 {
     public class DeleteBpmnProcessBaselineCommand : IRequest<bool>
     {

@@ -178,7 +178,7 @@ namespace Orchestra.Controllers
                         ProcessStep = step,
                         ResponsibleUserId = null,
                         ResponsibleUser = null,
-                        Status = "Pending",
+                        Completed = false,
                         CreatedAt = DateTime.UtcNow,
                         CompletedAt = null,
                         Comments = null

@@ -109,7 +109,9 @@ namespace Orchestra.Controllers
         [HttpPut("assign-user")]
         public async Task<IActionResult> AssignUserToTask([FromBody] AssignUserToTaskDto dto)
         {
-            var task = await _context.Tasks.FindAsync(dto.TaskId);
+            var task = await _context.Tasks
+                .FirstOrDefaultAsync(t => t.XmlTaskId == dto.TaskId);
+
             if (task == null)
                 return NotFound("Task não encontrada.");
 
@@ -123,6 +125,93 @@ namespace Orchestra.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        [HttpGet("by-process-instance/{processInstanceId}")]
+        public async Task<IActionResult> GetTasksByProcessInstance(int processInstanceId, CancellationToken cancellationToken)
+        {
+            var tasks = await _context.Tasks
+                .Include(t => t.ResponsibleUser)
+                .Where(t => t.BpmnProcessId == processInstanceId)
+                .ToListAsync(cancellationToken);
+
+            if (tasks == null || tasks.Count == 0)
+                return NotFound("Nenhuma task encontrada para esse processo.");
+
+            var result = tasks.Select(t => new TaskWithUserDto
+            {
+                TaskId = t.Id,
+                XmlTaskId = t.XmlTaskId,
+                Completed = t.Completed,
+                CreatedAt = t.CreatedAt,
+                CompletedAt = t.CompletedAt,
+                Comments = t.Comments,
+                ResponsibleUser = t.ResponsibleUser == null ? null : new UserDto
+                {
+                    Id = t.ResponsibleUser.Id,
+                    UserName = t.ResponsibleUser.UserName,
+                    Email = t.ResponsibleUser.Email,
+                    FullName = t.ResponsibleUser.FullName,
+                    Role = t.ResponsibleUser.Role
+                }
+            }).ToList();
+
+            return Ok(result);
+        }
+
+
+        [HttpGet("user-process-instances/{userId}")]
+        public async Task<IActionResult> GetProcessInstancesWithUserTasks(string userId, CancellationToken cancellationToken)
+        {
+            // Busca todas as tasks do usuário
+            var userTasks = await _context.Tasks
+                .Include(t => t.BpmnProcess)
+                .Where(t => t.ResponsibleUserId == userId)
+                .ToListAsync(cancellationToken);
+
+            // Agrupa as tasks por instância de processo
+            var grouped = userTasks
+                .GroupBy(t => t.BpmnProcessId)
+                .ToList();
+
+            // Busca as instâncias de processo relacionadas
+            var processInstanceIds = grouped.Select(g => g.Key).ToList();
+            var processInstances = await _context.bpmnProcessInstances
+                .Where(pi => processInstanceIds.Contains(pi.Id))
+                .ToListAsync(cancellationToken);
+
+            // Monta o resultado
+            var result = processInstances.Select(pi => new ProcessInstanceWithTasksDto
+            {
+                ProcessInstanceId = pi.Id,
+                Name = pi.Name,
+                XmlContent = pi.XmlContent,
+                CreatedAt = pi.CreatedAt,
+                BpmnProcessBaselineId = pi.BpmnProcessBaselineId,
+                PoolNames = pi.PoolNames,
+                Tasks = userTasks
+                    .Where(t => t.BpmnProcessId == pi.Id)
+                    .Select(t => new TaskWithUserDto
+                    {
+                        TaskId = t.Id,
+                        XmlTaskId = t.XmlTaskId,
+                        Completed = t.Completed,
+                        Name = t.Name,
+                        CreatedAt = t.CreatedAt,
+                        CompletedAt = t.CompletedAt,
+                        Comments = t.Comments,
+                        ResponsibleUser = t.ResponsibleUser == null ? null : new UserDto
+                        {
+                            Id = t.ResponsibleUser.Id,
+                            UserName = t.ResponsibleUser.UserName,
+                            Email = t.ResponsibleUser.Email,
+                            FullName = t.ResponsibleUser.FullName,
+                            Role = t.ResponsibleUser.Role
+                        }
+                    }).ToList()
+            }).ToList();
+
+            return Ok(result);
         }
 
     }
