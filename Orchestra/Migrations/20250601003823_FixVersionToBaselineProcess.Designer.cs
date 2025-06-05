@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Orchestra.Data.Context;
 
@@ -11,9 +12,11 @@ using Orchestra.Data.Context;
 namespace Orchestra.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250601003823_FixVersionToBaselineProcess")]
+    partial class FixVersionToBaselineProcess
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -139,53 +142,6 @@ namespace Orchestra.Migrations
                     b.ToTable("ProcessStep");
                 });
 
-            modelBuilder.Entity("Orchestra.Models.Status", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Status");
-                });
-
-            modelBuilder.Entity("Orchestra.Models.SubTask", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("StatusId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("TaskId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("StatusId");
-
-                    b.HasIndex("TaskId");
-
-                    b.ToTable("SubTasks");
-                });
-
             modelBuilder.Entity("Orchestra.Models.Tasks", b =>
                 {
                     b.Property<Guid>("Id")
@@ -198,23 +154,11 @@ namespace Orchestra.Migrations
                     b.Property<string>("Comments")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("Completed")
-                        .HasColumnType("bit");
-
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("ExpectedConclusionDate")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<Guid>("ProcessStepId")
                         .HasColumnType("uniqueidentifier");
@@ -222,8 +166,9 @@ namespace Orchestra.Migrations
                     b.Property<string>("ResponsibleUserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<int>("StatusId")
-                        .HasColumnType("int");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("XmlTaskId")
                         .IsRequired()
@@ -236,8 +181,6 @@ namespace Orchestra.Migrations
                     b.HasIndex("ProcessStepId");
 
                     b.HasIndex("ResponsibleUserId");
-
-                    b.HasIndex("StatusId");
 
                     b.ToTable("Tasks");
                 });
@@ -316,25 +259,6 @@ namespace Orchestra.Migrations
                     b.Navigation("BpmnProcessBaseline");
                 });
 
-            modelBuilder.Entity("Orchestra.Models.SubTask", b =>
-                {
-                    b.HasOne("Orchestra.Models.Status", "Status")
-                        .WithMany()
-                        .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Orchestra.Models.Tasks", "Task")
-                        .WithMany("SubTasks")
-                        .HasForeignKey("TaskId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Status");
-
-                    b.Navigation("Task");
-                });
-
             modelBuilder.Entity("Orchestra.Models.Tasks", b =>
                 {
                     b.HasOne("Orchestra.Models.Orchestra.Models.BpmnProcessInstance", "BpmnProcess")
@@ -353,19 +277,11 @@ namespace Orchestra.Migrations
                         .WithMany("AssignedTasks")
                         .HasForeignKey("ResponsibleUserId");
 
-                    b.HasOne("Orchestra.Models.Status", "Status")
-                        .WithMany()
-                        .HasForeignKey("StatusId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("BpmnProcess");
 
                     b.Navigation("ProcessStep");
 
                     b.Navigation("ResponsibleUser");
-
-                    b.Navigation("Status");
                 });
 
             modelBuilder.Entity("Orchestra.Models.User", b =>
@@ -375,11 +291,6 @@ namespace Orchestra.Migrations
                         .HasForeignKey("UserGroupId");
 
                     b.Navigation("UserGroup");
-                });
-
-            modelBuilder.Entity("Orchestra.Models.Tasks", b =>
-                {
-                    b.Navigation("SubTasks");
                 });
 
             modelBuilder.Entity("Orchestra.Models.User", b =>

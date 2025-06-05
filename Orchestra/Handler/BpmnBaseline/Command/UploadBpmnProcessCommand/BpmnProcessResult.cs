@@ -1,6 +1,6 @@
 ﻿using Orchestra.Models;
 
-namespace Orchestra.Handler.Command.UploadBpmnProcessCommand
+namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
 {
     public class BpmnProcessResult
     {
