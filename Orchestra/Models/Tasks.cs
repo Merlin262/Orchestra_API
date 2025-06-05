@@ -6,7 +6,7 @@ namespace Orchestra.Models
     public class Tasks
     {
         public Guid Id { get; set; }
-        public string? Name { get; set; } = "Teste";
+        public string? Name { get; set; }
         public string? Description { get; set; }
         public string XmlTaskId { get; set; }
         public int BpmnProcessId { get; set; }

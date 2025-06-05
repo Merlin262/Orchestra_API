@@ -197,6 +197,7 @@ namespace Orchestra.Controllers
                         XmlTaskId = t.XmlTaskId,
                         Completed = t.Completed,
                         Name = t.Name,
+                        StatusId = t.StatusId,
                         CreatedAt = t.CreatedAt,
                         CompletedAt = t.CompletedAt,
                         Comments = t.Comments,
@@ -212,6 +213,26 @@ namespace Orchestra.Controllers
             }).ToList();
 
             return Ok(result);
+        }
+
+
+        [HttpPut("update-status")]
+        public async Task<IActionResult> UpdateTaskStatus([FromBody] UpdateTaskStatusDto dto)
+        {
+            var task = await _context.Tasks.FindAsync(dto.TaskId);
+            if (task == null)
+                return NotFound("Task não encontrada.");
+
+            var status = await _context.Status.FindAsync(dto.StatusId);
+            if (status == null)
+                return NotFound("Status não encontrado.");
+
+            task.StatusId = status.Id;
+            task.Status = status;
+
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
 
     }

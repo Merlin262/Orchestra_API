@@ -1,14 +1,15 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Orchestra.Data.Context;
+using Orchestra.Dtos;
+using Orchestra.Models;
+using Orchestra.Models.Orchestra.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Orchestra.Data.Context;
-using Orchestra.Models;
-using Orchestra.Models.Orchestra.Models;
 
 namespace Orchestra.Controllers
 {
@@ -166,11 +167,13 @@ namespace Orchestra.Controllers
             foreach (var element in taskElements)
             {
                 var bpmnId = element.Attribute("id")?.Value;
+                var taskName = element.Attribute("name")?.Value; // <-- Captura o nome do XML
                 if (!string.IsNullOrEmpty(bpmnId) && stepMap.TryGetValue(bpmnId, out var step))
                 {
                     var task = new Tasks
                     {
                         Id = Guid.NewGuid(),
+                        Name = taskName,
                         XmlTaskId = bpmnId,
                         BpmnProcessId = instance.Id,
                         BpmnProcess = instance,
@@ -181,7 +184,8 @@ namespace Orchestra.Controllers
                         Completed = false,
                         CreatedAt = DateTime.UtcNow,
                         CompletedAt = null,
-                        Comments = null
+                        Comments = null,
+                        StatusId = 3
                     };
                     tasks.Add(task);
                 }
@@ -196,5 +200,42 @@ namespace Orchestra.Controllers
             return CreatedAtAction(nameof(GetBpmnProcessInstance), new { id = instance.Id }, instance);
         }
 
+
+        // GET: api/BpmnProcessInstances/{id}/tasks
+        [HttpGet("{id}/tasks")]
+        public async Task<ActionResult<IEnumerable<TaskWithUserDto>>> GetTasksForProcessInstance(int id)
+        {
+            var processInstance = await _context.bpmnProcessInstances.FindAsync(id);
+            if (processInstance == null)
+                return NotFound();
+
+            var tasks = await _context.Tasks
+                .Where(t => t.BpmnProcessId == id)
+                .Include(t => t.ResponsibleUser)
+                .Include(t => t.Status)
+                .ToListAsync();
+
+            var result = tasks.Select(t => new TaskWithUserDto
+            {
+                TaskId = t.Id,
+                Name = t.Name,
+                XmlTaskId = t.XmlTaskId,
+                Completed = t.Completed,
+                StatusId = t.StatusId,
+                CreatedAt = t.CreatedAt,
+                CompletedAt = t.CompletedAt,
+                Comments = t.Comments,
+                ResponsibleUser = t.ResponsibleUser == null ? null : new UserDto
+                {
+                    Id = t.ResponsibleUser.Id,
+                    UserName = t.ResponsibleUser.UserName,
+                    Email = t.ResponsibleUser.Email,
+                    FullName = t.ResponsibleUser.FullName,
+                    Role = t.ResponsibleUser.Role
+                }
+            }).ToList();
+
+            return Ok(result);
+        }
     }
 }
