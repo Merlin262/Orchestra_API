@@ -1,10 +1,13 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Orchestra.Data.Context;
 using Orchestra.Dtos;
+using Orchestra.Handler.BpmnInstance.Command;
 using Orchestra.Models;
 using Orchestra.Models.Orchestra.Models;
+using Orchestra.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,10 +21,14 @@ namespace Orchestra.Controllers
     public class BpmnProcessInstancesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IBpmnProcessInstanceService _bpmnProcessInstanceService;
+        private readonly IMediator _mediator;
 
-        public BpmnProcessInstancesController(ApplicationDbContext context)
+        public BpmnProcessInstancesController(ApplicationDbContext context, IBpmnProcessInstanceService bpmnProcessInstanceService, IMediator mediator)
         {
             _context = context;
+            _bpmnProcessInstanceService = bpmnProcessInstanceService;
+            _mediator = mediator;
         }
 
         // GET: api/BpmnProcessInstances
@@ -112,94 +119,17 @@ namespace Orchestra.Controllers
         [HttpPost("CreateFromBaseline/{baselineId}")]
         public async Task<ActionResult<BpmnProcessInstance>> CreateFromBaseline(int baselineId)
         {
-            var baseline = await _context.BpmnProcess.FindAsync(baselineId);
-            if (baseline == null)
+            try
             {
-                return NotFound($"BpmnProcessBaseline com id {baselineId} não encontrado.");
+                var command = new CreateBpmnProcessInstanceFromBaselineCommand(baselineId);
+                var instance = await _mediator.Send(command);
+                return CreatedAtAction(nameof(GetBpmnProcessInstance), new { id = instance.Id }, instance);
             }
-
-            var instance = new BpmnProcessInstance
+            catch (Exception ex)
             {
-                Name = baseline.Name,
-                XmlContent = baseline.XmlContent,
-                BpmnProcessBaselineId = baseline.Id,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.bpmnProcessInstances.Add(instance);
-            await _context.SaveChangesAsync();
-
-            // Parse o XML para criar ProcessSteps e mapear pelo bpmnId
-            var xDoc = XDocument.Parse(baseline.XmlContent ?? "");
-            XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
-            var processSteps = new List<ProcessStep>();
-            var stepMap = new Dictionary<string, ProcessStep>();
-            var elementTypes = new[] { "startEvent", "task", "userTask", "scriptTask", "exclusiveGateway", "endEvent" };
-
-            foreach (var type in elementTypes)
-            {
-                var elements = xDoc.Descendants(bpmn + type);
-                foreach (var element in elements)
-                {
-                    var bpmnId = element.Attribute("id")?.Value ?? Guid.NewGuid().ToString();
-                    var step = new ProcessStep
-                    {
-                        Id = Guid.NewGuid(),
-                        BpmnId = bpmnId,
-                        Name = element.Attribute("name")?.Value ?? type,
-                        Type = type,
-                        BpmnProcessId = instance.Id
-                    };
-                    processSteps.Add(step);
-                    stepMap[bpmnId] = step;
-                }
+                return NotFound(ex.Message);
             }
-
-            if (processSteps.Any())
-            {
-                _context.ProcessStep.AddRange(processSteps);
-                await _context.SaveChangesAsync();
-            }
-
-            // Agora crie as Tasks associando ao ProcessStep correto
-            var tasks = new List<Tasks>();
-            var taskElements = xDoc.Descendants(bpmn + "task");
-            foreach (var element in taskElements)
-            {
-                var bpmnId = element.Attribute("id")?.Value;
-                var taskName = element.Attribute("name")?.Value; // <-- Captura o nome do XML
-                if (!string.IsNullOrEmpty(bpmnId) && stepMap.TryGetValue(bpmnId, out var step))
-                {
-                    var task = new Tasks
-                    {
-                        Id = Guid.NewGuid(),
-                        Name = taskName,
-                        XmlTaskId = bpmnId,
-                        BpmnProcessId = instance.Id,
-                        BpmnProcess = instance,
-                        ProcessStepId = step.Id,
-                        ProcessStep = step,
-                        ResponsibleUserId = null,
-                        ResponsibleUser = null,
-                        Completed = false,
-                        CreatedAt = DateTime.UtcNow,
-                        CompletedAt = null,
-                        Comments = null,
-                        StatusId = 3
-                    };
-                    tasks.Add(task);
-                }
-            }
-
-            if (tasks.Any())
-            {
-                _context.Tasks.AddRange(tasks);
-                await _context.SaveChangesAsync();
-            }
-
-            return CreatedAtAction(nameof(GetBpmnProcessInstance), new { id = instance.Id }, instance);
         }
-
 
         // GET: api/BpmnProcessInstances/{id}/tasks
         [HttpGet("{id}/tasks")]

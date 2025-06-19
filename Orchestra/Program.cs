@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Orchestra.Data.Context;
+using Orchestra.Repoitories;
+using Orchestra.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,7 +16,7 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
-// Configurações de serviços
+// Configuraï¿½ï¿½es de serviï¿½os
 builder.AddServiceDefaults();
 
 // Swagger
@@ -37,16 +39,21 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Add MediatR services
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
-// Adicione esta linha para registrar o repositório
-builder.Services.AddScoped<Orchestra.Repoitories.IBpmnProcessRepository, Orchestra.Repoitories.BpmnProcessRepository>();
+// Adicione esta linha para registrar o repositï¿½rio
+builder.Services.AddScoped<IBpmnProcessRepository, BpmnProcessRepository>();
+builder.Services.AddScoped<IBpmnProcessInstanceService, BpmnProcessInstanceService>();
+builder.Services.AddScoped<IBpmnProcessInstanceRepository, BpmnProcessInstanceRepository>();
+builder.Services.AddScoped<IProcessStepRepository, ProcessStepRepository>();
+builder.Services.AddScoped<ITasksRepository, TasksRepository>();
+builder.Services.AddScoped<IBpmnProcessBaselineRepository, BpmnProcessBaselineRepository>();
 
 
-// Build do app (deve vir depois da configuração de serviços)
+// Build do app (deve vir depois da configuraï¿½ï¿½o de serviï¿½os)
 var app = builder.Build();
 
 app.UseCors("AllowLocalhost3000");
 
-// Pipeline de requisições
+// Pipeline de requisiï¿½ï¿½es
 app.MapDefaultEndpoints();
 
 if (app.Environment.IsDevelopment())
