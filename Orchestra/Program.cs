@@ -2,8 +2,11 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Orchestra.Data.Context;
+using Orchestra.Models.Orchestra.Models;
 using Orchestra.Repoitories;
+using Orchestra.Repoitories.Interfaces;
 using Orchestra.Services;
+using Orchestra.Serviecs.Intefaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,11 +44,13 @@ builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Progr
 
 // Adicione esta linha para registrar o reposit�rio
 builder.Services.AddScoped<IBpmnProcessRepository, BpmnProcessRepository>();
-builder.Services.AddScoped<IBpmnProcessInstanceService, BpmnProcessInstanceService>();
 builder.Services.AddScoped<IBpmnProcessInstanceRepository, BpmnProcessInstanceRepository>();
 builder.Services.AddScoped<IProcessStepRepository, ProcessStepRepository>();
 builder.Services.AddScoped<ITasksRepository, TasksRepository>();
 builder.Services.AddScoped<IBpmnProcessBaselineRepository, BpmnProcessBaselineRepository>();
+builder.Services.AddScoped<IGenericRepository<BpmnProcessInstance>, GenericRepository<BpmnProcessInstance>>();
+builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<IBpmnProcessInstanceService, BpmnProcessInstanceService>();
 
 
 // Build do app (deve vir depois da configura��o de servi�os)

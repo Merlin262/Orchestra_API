@@ -1,4 +1,4 @@
-﻿namespace Orchestra.Repoitories
+﻿namespace Orchestra.Repoitories.Interfaces
 {
     public interface IGenericRepository<T> where T : class
     {

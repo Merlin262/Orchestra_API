@@ -2,36 +2,57 @@
 using Orchestra.Models.Orchestra.Models;
 using Orchestra.Models;
 using System.Xml.Linq;
+using Orchestra.Repoitories.Interfaces;
 using Orchestra.Repoitories;
+using Orchestra.Serviecs.Intefaces;
 
 namespace Orchestra.Services
 {
-    public interface IBpmnProcessInstanceService
-    {
-        Task<BpmnProcessBaseline?> GetBaselineAsync(int baselineId);
-        Task<BpmnProcessInstance> CreateInstanceAsync(BpmnProcessBaseline baseline);
-        Task<(List<ProcessStep> steps, Dictionary<string, ProcessStep> stepMap)> ParseAndCreateStepsAsync(BpmnProcessInstance instance, string? xmlContent);
-        Task<List<Tasks>> ParseAndCreateTasksAsync(BpmnProcessInstance instance, string? xmlContent, Dictionary<string, ProcessStep> stepMap);
-    }
+    //public interface IBpmnProcessInstanceService : IGenericRepository<BpmnProcessInstance>
+    //{
+    //    Task<BpmnProcessBaseline?> GetBaselineAsync(int baselineId);
+    //    Task<BpmnProcessInstance> CreateInstanceAsync(BpmnProcessBaseline baseline);
+    //    Task<(List<ProcessStep> steps, Dictionary<string, ProcessStep> stepMap)> ParseAndCreateStepsAsync(BpmnProcessInstance instance, string? xmlContent);
+    //    Task<List<Tasks>> ParseAndCreateTasksAsync(BpmnProcessInstance instance, string? xmlContent, Dictionary<string, ProcessStep> stepMap);
+    //}
 
     public class BpmnProcessInstanceService : IBpmnProcessInstanceService
     {
         private readonly IBpmnProcessBaselineRepository _baselineRepository;
-        private readonly IBpmnProcessInstanceRepository _instanceRepository;
+        private readonly IGenericRepository<BpmnProcessInstance> _genericRepository;
         private readonly IProcessStepRepository _stepRepository;
         private readonly ITasksRepository _tasksRepository;
 
         public BpmnProcessInstanceService(
             IBpmnProcessBaselineRepository baselineRepository,
-            IBpmnProcessInstanceRepository instanceRepository,
+            IGenericRepository<BpmnProcessInstance> genericRepository,
             IProcessStepRepository stepRepository,
             ITasksRepository tasksRepository)
         {
             _baselineRepository = baselineRepository;
-            _instanceRepository = instanceRepository;
+            _genericRepository = genericRepository;
             _stepRepository = stepRepository;
             _tasksRepository = tasksRepository;
         }
+
+        public Task<IEnumerable<BpmnProcessInstance>> GetAllAsync(CancellationToken cancellationToken)
+            => _genericRepository.GetAllAsync(cancellationToken);
+
+        public Task<BpmnProcessInstance?> GetByIdAsync(int id, CancellationToken cancellationToken)
+            => _genericRepository.GetByIdAsync(id, cancellationToken);
+
+        //public async Task AddAsync(BpmnProcessInstance entity, CancellationToken cancellationToken)
+        //    => await _genericRepository.AddAsync(entity, cancellationToken);
+        public async Task AddAsync(BpmnProcessInstance entity, CancellationToken cancellationToken)
+        {
+            await _genericRepository.AddAsync(entity, cancellationToken);
+        }
+
+        public async Task UpdateAsync(BpmnProcessInstance entity, CancellationToken cancellationToken)
+            => await _genericRepository.UpdateAsync(entity, cancellationToken);
+
+        public async Task DeleteAsync(BpmnProcessInstance entity, CancellationToken cancellationToken)
+            => await _genericRepository.DeleteAsync(entity, cancellationToken);
 
         public async Task<BpmnProcessBaseline?> GetBaselineAsync(int baselineId)
         {
@@ -47,7 +68,8 @@ namespace Orchestra.Services
                 BpmnProcessBaselineId = baseline.Id,
                 CreatedAt = DateTime.UtcNow
             };
-            return await _instanceRepository.AddAsync(instance);
+            await AddAsync(instance, default);
+            return instance;
         }
 
         public async Task<(List<ProcessStep> steps, Dictionary<string, ProcessStep> stepMap)> ParseAndCreateStepsAsync(BpmnProcessInstance instance, string? xmlContent)

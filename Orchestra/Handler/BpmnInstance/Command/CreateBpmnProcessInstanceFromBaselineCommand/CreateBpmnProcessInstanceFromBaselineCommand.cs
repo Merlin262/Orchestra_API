@@ -1,7 +1,7 @@
 ﻿using MediatR;
 using Orchestra.Models.Orchestra.Models;
 
-namespace Orchestra.Handler.BpmnInstance.Command
+namespace Orchestra.Handler.BpmnInstance.Command.CreateBpmnProcessInstanceFromBaselineCommand
 {
     public class CreateBpmnProcessInstanceFromBaselineCommand : IRequest<BpmnProcessInstance>
     {

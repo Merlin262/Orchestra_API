@@ -1,5 +1,7 @@
-﻿using Orchestra.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Orchestra.Data.Context;
 using Orchestra.Models;
+using Orchestra.Repoitories.Interfaces;
 
 namespace Orchestra.Repoitories
 {
@@ -16,6 +18,15 @@ namespace Orchestra.Repoitories
         {
             _context.Tasks.AddRange(tasks);
             await _context.SaveChangesAsync();
+        }
+
+        public async Task<List<Tasks>> GetByProcessInstanceIdAsync(int processInstanceId, CancellationToken cancellationToken = default)
+        {
+            return await _context.Tasks
+                .Where(t => t.BpmnProcessId == processInstanceId)
+                .Include(t => t.ResponsibleUser)
+                .Include(t => t.Status)
+                .ToListAsync(cancellationToken);
         }
     }
 }

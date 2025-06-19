@@ -28,7 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Handler\BpmnInstance\Query\" />
     <Folder Include="Handler\User\Query\GetUserByGroup\" />
   </ItemGroup>
 

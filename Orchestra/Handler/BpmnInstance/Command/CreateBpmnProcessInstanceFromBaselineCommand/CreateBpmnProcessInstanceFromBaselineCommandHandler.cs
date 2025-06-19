@@ -1,8 +1,10 @@
 ﻿using MediatR;
+using Orchestra.Models;
 using Orchestra.Models.Orchestra.Models;
 using Orchestra.Services;
+using Orchestra.Serviecs.Intefaces;
 
-namespace Orchestra.Handler.BpmnInstance.Command
+namespace Orchestra.Handler.BpmnInstance.Command.CreateBpmnProcessInstanceFromBaselineCommand
 {
     public class CreateBpmnProcessInstanceFromBaselineCommandHandler : IRequestHandler<CreateBpmnProcessInstanceFromBaselineCommand, BpmnProcessInstance>
     {
@@ -20,7 +22,7 @@ namespace Orchestra.Handler.BpmnInstance.Command
                 throw new Exception($"BpmnProcessBaseline com id {request.BaselineId} não encontrado.");
 
             var instance = await _service.CreateInstanceAsync(baseline);
-            var (_, stepMap) = await _service.ParseAndCreateStepsAsync(instance, baseline.XmlContent);
+            (List<ProcessStep> _, Dictionary<string, ProcessStep> stepMap) = await _service.ParseAndCreateStepsAsync(instance, baseline.XmlContent);
             await _service.ParseAndCreateTasksAsync(instance, baseline.XmlContent, stepMap);
 
             return instance;

@@ -1,21 +1,20 @@
-﻿using Orchestra.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Orchestra.Data.Context;
 using Orchestra.Models.Orchestra.Models;
+using Orchestra.Repoitories.Interfaces;
 
 namespace Orchestra.Repoitories
 {
-    public class BpmnProcessInstanceRepository : IBpmnProcessInstanceRepository
+    public class BpmnProcessInstanceRepository : GenericRepository<BpmnProcessInstance>, IBpmnProcessInstanceRepository
     {
-        private readonly ApplicationDbContext _context;
-        public BpmnProcessInstanceRepository(ApplicationDbContext context)
-        {
-            _context = context;
-        }
+        public BpmnProcessInstanceRepository(ApplicationDbContext context) : base(context) { }
 
-        public async Task<BpmnProcessInstance> AddAsync(BpmnProcessInstance instance)
+        // Aqui você pode adicionar métodos específicos, se necessário
+        public async Task<BpmnProcessInstance> AddAsync(BpmnProcessInstance instance, CancellationToken cancellationToken = default)
         {
-            _context.bpmnProcessInstances.Add(instance);
-            await _context.SaveChangesAsync();
+            await base.AddAsync(instance, cancellationToken);
             return instance;
         }
     }
+
 }

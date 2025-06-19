@@ -5,6 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Orchestra.Data.Context;
 using Orchestra.Dtos;
 using Orchestra.Handler.BpmnInstance.Command;
+using Orchestra.Handler.BpmnInstance.Command.CreateBpmnProcessInstanceCommand;
+using Orchestra.Handler.BpmnInstance.Command.CreateBpmnProcessInstanceFromBaselineCommand;
+using Orchestra.Handler.BpmnInstance.Command.DeleteInstance;
+using Orchestra.Handler.BpmnInstance.Query.GetById;
+using Orchestra.Handler.BpmnInstance.Query.GetProcessInstance;
+using Orchestra.Handler.BpmnInstance.Query.GetTasksForProcessInstance;
 using Orchestra.Models;
 using Orchestra.Models.Orchestra.Models;
 using Orchestra.Services;
@@ -20,14 +26,14 @@ namespace Orchestra.Controllers
     [ApiController]
     public class BpmnProcessInstancesController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
-        private readonly IBpmnProcessInstanceService _bpmnProcessInstanceService;
+        //private readonly ApplicationDbContext _context;
+        //private readonly IBpmnProcessInstanceService _bpmnProcessInstanceService;
         private readonly IMediator _mediator;
 
-        public BpmnProcessInstancesController(ApplicationDbContext context, IBpmnProcessInstanceService bpmnProcessInstanceService, IMediator mediator)
+        public BpmnProcessInstancesController(ApplicationDbContext context, IMediator mediator)
         {
-            _context = context;
-            _bpmnProcessInstanceService = bpmnProcessInstanceService;
+            //_context = context;
+            //_bpmnProcessInstanceService = bpmnProcessInstanceService;
             _mediator = mediator;
         }
 
@@ -35,14 +41,15 @@ namespace Orchestra.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BpmnProcessInstance>>> GetbpmnProcessInstances()
         {
-            return await _context.bpmnProcessInstances.ToListAsync();
+            var result = await _mediator.Send(new GetBpmnProcessInstancesQuery());
+            return Ok(result);
         }
 
         // GET: api/BpmnProcessInstances/5
         [HttpGet("{id}")]
         public async Task<ActionResult<BpmnProcessInstance>> GetBpmnProcessInstance(int id)
         {
-            var bpmnProcessInstance = await _context.bpmnProcessInstances.FindAsync(id);
+            var bpmnProcessInstance = await _mediator.Send(new GetBpmnProcessInstanceByIdQuery(id));
 
             if (bpmnProcessInstance == null)
             {
@@ -52,68 +59,59 @@ namespace Orchestra.Controllers
             return bpmnProcessInstance;
         }
 
+
         // PUT: api/BpmnProcessInstances/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutBpmnProcessInstance(int id, BpmnProcessInstance bpmnProcessInstance)
-        {
-            if (id != bpmnProcessInstance.Id)
-            {
-                return BadRequest();
-            }
+        //[HttpPut("{id}")]
+        //public async Task<IActionResult> PutBpmnProcessInstance(int id, BpmnProcessInstance bpmnProcessInstance)
+        //{
+        //    if (id != bpmnProcessInstance.Id)
+        //    {
+        //        return BadRequest();
+        //    }
 
-            _context.Entry(bpmnProcessInstance).State = EntityState.Modified;
+        //    _context.Entry(bpmnProcessInstance).State = EntityState.Modified;
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!BpmnProcessInstanceExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+        //    try
+        //    {
+        //        await _context.SaveChangesAsync();
+        //    }
+        //    catch (DbUpdateConcurrencyException)
+        //    {
+        //        if (!BpmnProcessInstanceExists(id))
+        //        {
+        //            return NotFound();
+        //        }
+        //        else
+        //        {
+        //            throw;
+        //        }
+        //    }
 
-            return NoContent();
-        }
+        //    return NoContent();
+        //}
 
         // POST: api/BpmnProcessInstances
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<BpmnProcessInstance>> PostBpmnProcessInstance(BpmnProcessInstance bpmnProcessInstance)
         {
-            _context.bpmnProcessInstances.Add(bpmnProcessInstance);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetBpmnProcessInstance", new { id = bpmnProcessInstance.Id }, bpmnProcessInstance);
+            var created = await _mediator.Send(new CreateBpmnProcessInstanceCommand(bpmnProcessInstance));
+            return CreatedAtAction(nameof(GetBpmnProcessInstance), new { id = created.Id }, created);
         }
+
 
         // DELETE: api/BpmnProcessInstances/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBpmnProcessInstance(int id)
         {
-            var bpmnProcessInstance = await _context.bpmnProcessInstances.FindAsync(id);
-            if (bpmnProcessInstance == null)
-            {
+            var result = await _mediator.Send(new DeleteBpmnProcessInstanceCommand(id));
+            if (!result)
                 return NotFound();
-            }
-
-            _context.bpmnProcessInstances.Remove(bpmnProcessInstance);
-            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool BpmnProcessInstanceExists(int id)
-        {
-            return _context.bpmnProcessInstances.Any(e => e.Id == id);
-        }
 
         // POST: api/BpmnProcessInstances/CreateFromBaseline/5
         [HttpPost("CreateFromBaseline/{baselineId}")]
@@ -135,35 +133,9 @@ namespace Orchestra.Controllers
         [HttpGet("{id}/tasks")]
         public async Task<ActionResult<IEnumerable<TaskWithUserDto>>> GetTasksForProcessInstance(int id)
         {
-            var processInstance = await _context.bpmnProcessInstances.FindAsync(id);
-            if (processInstance == null)
+            var result = await _mediator.Send(new GetTasksForProcessInstanceQuery(id));
+            if (result == null || !result.Any())
                 return NotFound();
-
-            var tasks = await _context.Tasks
-                .Where(t => t.BpmnProcessId == id)
-                .Include(t => t.ResponsibleUser)
-                .Include(t => t.Status)
-                .ToListAsync();
-
-            var result = tasks.Select(t => new TaskWithUserDto
-            {
-                TaskId = t.Id,
-                Name = t.Name,
-                XmlTaskId = t.XmlTaskId,
-                Completed = t.Completed,
-                StatusId = t.StatusId,
-                CreatedAt = t.CreatedAt,
-                CompletedAt = t.CompletedAt,
-                Comments = t.Comments,
-                ResponsibleUser = t.ResponsibleUser == null ? null : new UserDto
-                {
-                    Id = t.ResponsibleUser.Id,
-                    UserName = t.ResponsibleUser.UserName,
-                    Email = t.ResponsibleUser.Email,
-                    FullName = t.ResponsibleUser.FullName,
-                    Role = t.ResponsibleUser.Role
-                }
-            }).ToList();
 
             return Ok(result);
         }
