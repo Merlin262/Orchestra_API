@@ -7,13 +7,24 @@ namespace Orchestra.Repoitories
 {
     public class BpmnProcessInstanceRepository : GenericRepository<BpmnProcessInstance>, IBpmnProcessInstanceRepository
     {
-        public BpmnProcessInstanceRepository(ApplicationDbContext context) : base(context) { }
+        private readonly ApplicationDbContext _context;
 
-        // Aqui você pode adicionar métodos específicos, se necessário
+        public BpmnProcessInstanceRepository(ApplicationDbContext context) : base(context)
+        {
+            _context = context;
+        }
+
         public async Task<BpmnProcessInstance> AddAsync(BpmnProcessInstance instance, CancellationToken cancellationToken = default)
         {
             await base.AddAsync(instance, cancellationToken);
             return instance;
+        }
+
+        public async Task<List<BpmnProcessInstance>> GetByIdsAsync(List<int> ids, CancellationToken cancellationToken = default)
+        {
+            return await _context.bpmnProcessInstances
+                .Where(pi => ids.Contains(pi.Id))
+                .ToListAsync(cancellationToken);
         }
     }
 

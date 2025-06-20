@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,10 +17,12 @@ namespace Orchestra.Controllers
     public class TasksController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMediator _mediator;
 
-        public TasksController(ApplicationDbContext context)
+        public TasksController(ApplicationDbContext context, IMediator mediator)
         {
             _context = context;
+            _mediator = mediator;
         }
 
         // GET: api/Tasks
@@ -109,20 +112,11 @@ namespace Orchestra.Controllers
         [HttpPut("assign-user")]
         public async Task<IActionResult> AssignUserToTask([FromBody] AssignUserToTaskDto dto)
         {
-            var task = await _context.Tasks
-                .FirstOrDefaultAsync(t => t.XmlTaskId == dto.TaskId);
+            var command = new Handler.Tasks.Command.AssignUser.AssignUserToTaskCommand(dto.TaskId, dto.UserId);
+            var result = await _mediator.Send(command);
 
-            if (task == null)
-                return NotFound("Task não encontrada.");
-
-            var user = await _context.Users.FindAsync(dto.UserId);
-            if (user == null)
-                return NotFound("Usuário não encontrado.");
-
-            task.ResponsibleUserId = user.Id;
-            task.ResponsibleUser = user;
-
-            await _context.SaveChangesAsync();
+            if (!result)
+                return NotFound("Task ou Usuário não encontrado.");
 
             return NoContent();
         }
@@ -130,31 +124,11 @@ namespace Orchestra.Controllers
         [HttpGet("by-process-instance/{processInstanceId}")]
         public async Task<IActionResult> GetTasksByProcessInstance(int processInstanceId, CancellationToken cancellationToken)
         {
-            var tasks = await _context.Tasks
-                .Include(t => t.ResponsibleUser)
-                .Where(t => t.BpmnProcessId == processInstanceId)
-                .ToListAsync(cancellationToken);
+            var query = new Handler.BpmnInstance.Query.GetTasksForProcessInstance.GetTasksForProcessInstanceQuery(processInstanceId);
+            var result = await _mediator.Send(query, cancellationToken);
 
-            if (tasks == null || tasks.Count == 0)
+            if (result == null || result.Count == 0)
                 return NotFound("Nenhuma task encontrada para esse processo.");
-
-            var result = tasks.Select(t => new TaskWithUserDto
-            {
-                TaskId = t.Id,
-                XmlTaskId = t.XmlTaskId,
-                Completed = t.Completed,
-                CreatedAt = t.CreatedAt,
-                CompletedAt = t.CompletedAt,
-                Comments = t.Comments,
-                ResponsibleUser = t.ResponsibleUser == null ? null : new UserDto
-                {
-                    Id = t.ResponsibleUser.Id,
-                    UserName = t.ResponsibleUser.UserName,
-                    Email = t.ResponsibleUser.Email,
-                    FullName = t.ResponsibleUser.FullName,
-                    Role = t.ResponsibleUser.Role
-                }
-            }).ToList();
 
             return Ok(result);
         }
@@ -163,54 +137,11 @@ namespace Orchestra.Controllers
         [HttpGet("user-process-instances/{userId}")]
         public async Task<IActionResult> GetProcessInstancesWithUserTasks(string userId, CancellationToken cancellationToken)
         {
-            // Busca todas as tasks do usuário
-            var userTasks = await _context.Tasks
-                .Include(t => t.BpmnProcess)
-                .Where(t => t.ResponsibleUserId == userId)
-                .ToListAsync(cancellationToken);
+            var query = new Handler.Tasks.Querry.GetProcessInstancesWithUserTasks.GetProcessInstancesWithUserTasksQuery(userId, cancellationToken);
+            var result = await _mediator.Send(query, cancellationToken);
 
-            // Agrupa as tasks por instância de processo
-            var grouped = userTasks
-                .GroupBy(t => t.BpmnProcessId)
-                .ToList();
-
-            // Busca as instâncias de processo relacionadas
-            var processInstanceIds = grouped.Select(g => g.Key).ToList();
-            var processInstances = await _context.bpmnProcessInstances
-                .Where(pi => processInstanceIds.Contains(pi.Id))
-                .ToListAsync(cancellationToken);
-
-            // Monta o resultado
-            var result = processInstances.Select(pi => new ProcessInstanceWithTasksDto
-            {
-                ProcessInstanceId = pi.Id,
-                Name = pi.Name,
-                XmlContent = pi.XmlContent,
-                CreatedAt = pi.CreatedAt,
-                BpmnProcessBaselineId = pi.BpmnProcessBaselineId,
-                PoolNames = pi.PoolNames,
-                Tasks = userTasks
-                    .Where(t => t.BpmnProcessId == pi.Id)
-                    .Select(t => new TaskWithUserDto
-                    {
-                        TaskId = t.Id,
-                        XmlTaskId = t.XmlTaskId,
-                        Completed = t.Completed,
-                        Name = t.Name,
-                        StatusId = t.StatusId,
-                        CreatedAt = t.CreatedAt,
-                        CompletedAt = t.CompletedAt,
-                        Comments = t.Comments,
-                        ResponsibleUser = t.ResponsibleUser == null ? null : new UserDto
-                        {
-                            Id = t.ResponsibleUser.Id,
-                            UserName = t.ResponsibleUser.UserName,
-                            Email = t.ResponsibleUser.Email,
-                            FullName = t.ResponsibleUser.FullName,
-                            Role = t.ResponsibleUser.Role
-                        }
-                    }).ToList()
-            }).ToList();
+            if (result == null || result.Count == 0)
+                return NotFound("Nenhuma task encontrada para esse processo.");
 
             return Ok(result);
         }
@@ -219,18 +150,11 @@ namespace Orchestra.Controllers
         [HttpPut("update-status")]
         public async Task<IActionResult> UpdateTaskStatus([FromBody] UpdateTaskStatusDto dto)
         {
-            var task = await _context.Tasks.FindAsync(dto.TaskId);
-            if (task == null)
-                return NotFound("Task não encontrada.");
+            var command = new Handler.Tasks.Command.UpdateTaskStatus.UpdateTaskStatusCommand(dto.TaskId, dto.StatusId);
+            var result = await _mediator.Send(command);
 
-            var status = await _context.Status.FindAsync(dto.StatusId);
-            if (status == null)
-                return NotFound("Status não encontrado.");
-
-            task.StatusId = status.Id;
-            task.Status = status;
-
-            await _context.SaveChangesAsync();
+            if (!result)
+                return NotFound("Task ou Status não encontrado.");
 
             return NoContent();
         }

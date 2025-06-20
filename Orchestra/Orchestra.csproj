@@ -28,6 +28,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Handler\Tasks\Querry\GetById\" />
+    <Folder Include="Handler\Tasks\Querry\GetAll\" />
     <Folder Include="Handler\User\Query\GetUserByGroup\" />
   </ItemGroup>
 
