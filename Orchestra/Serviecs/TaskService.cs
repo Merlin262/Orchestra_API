@@ -31,7 +31,7 @@ namespace Orchestra.Services
                 Name = t.Name,
                 XmlTaskId = t.XmlTaskId,
                 Completed = t.Completed,
-                StatusId = t.StatusId,
+                StatusId = (int)t.Status,
                 CreatedAt = t.CreatedAt,
                 CompletedAt = t.CompletedAt,
                 Comments = t.Comments,
@@ -108,7 +108,7 @@ namespace Orchestra.Services
                 Name = t.Name,
                 XmlTaskId = t.XmlTaskId,
                 Completed = t.Completed,
-                StatusId = t.StatusId,
+                StatusId = (int)t.Status,
                 CreatedAt = t.CreatedAt,
                 CompletedAt = t.CompletedAt,
                 Comments = t.Comments,
@@ -135,8 +135,7 @@ namespace Orchestra.Services
             if (status == null)
                 return false;
 
-            task.StatusId = status.Id;
-            task.Status = status;
+            task.Status = status.Value;
 
             await _tasksRepository.UpdateAsync(task, cancellationToken);
 

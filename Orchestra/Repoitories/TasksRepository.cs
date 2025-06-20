@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Orchestra.Data.Context;
+using Orchestra.Enums;
 using Orchestra.Models;
 using Orchestra.Repoitories.Interfaces;
 
@@ -38,9 +39,12 @@ namespace Orchestra.Repoitories
                 .ToListAsync(cancellationToken);
         }
 
-        public async Task<Status?> GetStatusByIdAsync(int statusId, CancellationToken cancellationToken = default)
+        public async Task<StatusEnum?> GetStatusByIdAsync(int statusId, CancellationToken cancellationToken = default)
         {
-            return await _context.Status.FirstOrDefaultAsync(s => s.Id == statusId, cancellationToken);
+            // Verifica se o valor recebido corresponde a um valor válido do enum
+            if (Enum.IsDefined(typeof(StatusEnum), statusId))
+                return (StatusEnum)statusId;
+            return null;
         }
         public async Task<Tasks?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
         {

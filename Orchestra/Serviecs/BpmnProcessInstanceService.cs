@@ -1,10 +1,11 @@
 ﻿using Orchestra.Data.Context;
-using Orchestra.Models.Orchestra.Models;
+using Orchestra.Enums;
 using Orchestra.Models;
-using System.Xml.Linq;
-using Orchestra.Repoitories.Interfaces;
+using Orchestra.Models.Orchestra.Models;
 using Orchestra.Repoitories;
+using Orchestra.Repoitories.Interfaces;
 using Orchestra.Serviecs.Intefaces;
+using System.Xml.Linq;
 
 namespace Orchestra.Services
 {
@@ -134,7 +135,7 @@ namespace Orchestra.Services
                         CreatedAt = DateTime.UtcNow,
                         CompletedAt = null,
                         Comments = null,
-                        StatusId = 3
+                        Status = StatusEnum.NotStarted
                     };
                     tasks.Add(task);
                 }
