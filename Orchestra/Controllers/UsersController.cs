@@ -96,17 +96,17 @@ namespace Orchestra.Controllers
             return NoContent();
         }
 
-        [HttpGet("ByGroups")]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsersByGroupNames([FromQuery] List<string> groupNames)
-        {
-            if (groupNames == null || !groupNames.Any())
-                return BadRequest("A lista de nomes de grupos não pode ser vazia.");
+        //[HttpGet("ByGroups")]
+        //public async Task<ActionResult<IEnumerable<User>>> GetUsersByGroupNames([FromQuery] List<string> groupNames)
+        //{
+        //    if (groupNames == null || !groupNames.Any())
+        //        return BadRequest("A lista de nomes de grupos não pode ser vazia.");
 
-            var users = await _context.Users
-                .Where(u => u.UserGroup != null && groupNames.Contains(u.UserGroup.Name))
-                .ToListAsync();
+        //    var users = await _context.Users
+        //        .Where(u => u.UserGroup != null && groupNames.Contains(u.UserGroup.Name))
+        //        .ToListAsync();
 
-            return Ok(users);
-        }
+        //    return Ok(users);
+        //}
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Identity.Client;
+using Orchestra.Enums;
 using Orchestra.Models.Orchestra.Models;
 
 namespace Orchestra.Models
@@ -20,8 +21,6 @@ namespace Orchestra.Models
         public DateTime? CompletedAt { get; set; }
         public DateTime? ExpectedConclusionDate { get; set; }
         public string? Comments { get; set; }
-        public ICollection<SubTask> SubTasks { get; set; } = new List<SubTask>();
-        public int StatusId { get; set; }
-        public Status Status { get; set; }
+        public StatusEnum Status { get; set; }
     }
 }

@@ -1,8 +1,9 @@
-﻿using System.Xml.Linq;
+﻿using Orchestra.Serviecs.Intefaces;
+using System.Xml.Linq;
 
 namespace Orchestra.Serviecs
 {
-    public class BpmnBaselineService
+    public class BpmnBaselineService : IBpmnBaselineService
     {
         public List<string> ExtractPoolNames(string xmlContent)
         {

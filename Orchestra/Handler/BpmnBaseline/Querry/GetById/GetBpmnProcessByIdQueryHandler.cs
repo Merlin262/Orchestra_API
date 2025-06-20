@@ -1,6 +1,6 @@
 ﻿using MediatR;
 using Orchestra.Models;
-using Orchestra.Repoitories;
+using Orchestra.Repoitories.Interfaces;
 
 namespace Orchestra.Handler.BpmnBaseline.Querry.GetById
 {

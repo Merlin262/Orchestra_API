@@ -1,6 +1,6 @@
 ﻿using Orchestra.Models;
 
-namespace Orchestra.Repoitories
+namespace Orchestra.Repoitories.Interfaces
 {
     public interface IBpmnProcessRepository : IGenericRepository<BpmnProcessBaseline>
     {
