@@ -5,7 +5,11 @@ using Orchestra.Data.Context;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using Orchestra.Models.Orchestra.Models;
+using Orchestra.Repoitories;
+using Orchestra.Repoitories.Interfaces;
 using Orchestra.Services;
+using Orchestra.Serviecs.Intefaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,8 +22,6 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
-
-// Configurações de serviços
 builder.AddServiceDefaults();
 
 // Swagger
@@ -61,16 +63,25 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Add MediatR services
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
-// Adicione esta linha para registrar o repositório
-builder.Services.AddScoped<Orchestra.Repoitories.IBpmnProcessRepository, Orchestra.Repoitories.BpmnProcessRepository>();
+// Adicione esta linha para registrar o repositï¿½rio
+builder.Services.AddScoped<IBpmnProcessRepository, BpmnProcessRepository>();
+builder.Services.AddScoped<IBpmnProcessInstanceRepository, BpmnProcessInstanceRepository>();
+builder.Services.AddScoped<IProcessStepRepository, ProcessStepRepository>();
+builder.Services.AddScoped<ITasksRepository, TasksRepository>();
+builder.Services.AddScoped<IBpmnProcessBaselineRepository, BpmnProcessBaselineRepository>();
+builder.Services.AddScoped<IGenericRepository<BpmnProcessInstance>, GenericRepository<BpmnProcessInstance>>();
+builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<IBpmnProcessInstanceService, BpmnProcessInstanceService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IBpmnBaselineService, BpmnBaselineService>();
 
-
-// Build do app (deve vir depois da configuração de serviços)
+// Build do app (deve vir depois da configuraï¿½ï¿½o de serviï¿½os)
 var app = builder.Build();
 
 app.UseCors("AllowLocalhost3000");
 
-// Pipeline de requisições
+// Pipeline de requisiï¿½ï¿½es
 app.MapDefaultEndpoints();
 
 if (app.Environment.IsDevelopment())

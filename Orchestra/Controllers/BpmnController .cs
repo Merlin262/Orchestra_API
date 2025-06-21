@@ -1,13 +1,14 @@
 ﻿using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Orchestra.Data.Context;
 using Orchestra.Dtos;
 using Orchestra.Handler;
-using Orchestra.Handler.Command;
-using Orchestra.Handler.Command.DeleteBpmnProcessBaselineCommand;
-using Orchestra.Handler.Command.UploadBpmnProcessCommand;
-using Orchestra.Handler.Querry;
-using Orchestra.Handler.Querry.GetById;
+using Orchestra.Handler.BpmnBaseline.Command.DeleteBpmnProcessBaselineCommand;
+using Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand;
+using Orchestra.Handler.BpmnBaseline.Querry.GetAll;
+using Orchestra.Handler.BpmnBaseline.Querry.GetById;
 using System.Xml.Linq;
 
 namespace Orchestra.Controllers
@@ -17,10 +18,13 @@ namespace Orchestra.Controllers
     public class BpmnController : ControllerBase
     {
         private readonly IMediator _mediator;
+        private readonly ApplicationDbContext _context;
 
-        public BpmnController(IMediator mediator)
+
+        public BpmnController(IMediator mediator, ApplicationDbContext context)
         {
             _mediator = mediator;
+            _context = context;
         }
 
         [HttpPost("upload")]
@@ -32,7 +36,7 @@ namespace Orchestra.Controllers
 
             var command = new BpmnProcessCommand
             {
-                //Name = request.Name,
+                UserId = request.UserId,
                 File = request.File
             };
 
@@ -70,6 +74,31 @@ namespace Orchestra.Controllers
                 return NotFound();
 
             return NoContent();
+        }
+
+        [HttpGet("{id}/pools")]
+        public async Task<IActionResult> GetPoolNames(int id, CancellationToken cancellationToken)
+        {
+            var process = await _context.BpmnProcess
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+            if (process == null)
+                return NotFound();
+
+            return Ok(process.PoolNames);
+        }
+
+        [HttpGet("by-user/{userId}")]
+        public async Task<IActionResult> GetByCreatedByUserId(string userId, CancellationToken cancellationToken)
+        {
+            var query = new Handler.BpmnBaseline.Querry.GetByUser.GetProcessBaselineByUser(userId);
+            var baselines = await _mediator.Send(query, cancellationToken);
+
+            if (baselines == null || baselines.Count == 0)
+                return NotFound();
+
+            return Ok(baselines);
         }
     }
 }

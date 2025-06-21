@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -16,10 +17,12 @@ namespace Orchestra.Controllers
     public class TasksController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMediator _mediator;
 
-        public TasksController(ApplicationDbContext context)
+        public TasksController(ApplicationDbContext context, IMediator mediator)
         {
             _context = context;
+            _mediator = mediator;
         }
 
         // GET: api/Tasks
@@ -109,18 +112,49 @@ namespace Orchestra.Controllers
         [HttpPut("assign-user")]
         public async Task<IActionResult> AssignUserToTask([FromBody] AssignUserToTaskDto dto)
         {
-            var task = await _context.Tasks.FindAsync(dto.TaskId);
-            if (task == null)
-                return NotFound("Task não encontrada.");
+            var command = new Handler.Tasks.Command.AssignUser.AssignUserToTaskCommand(dto.TaskId, dto.UserId);
+            var result = await _mediator.Send(command);
 
-            var user = await _context.Users.FindAsync(dto.UserId);
-            if (user == null)
-                return NotFound("Usuário não encontrado.");
+            if (!result)
+                return NotFound("Task ou Usuário não encontrado.");
 
-            task.ResponsibleUserId = user.Id;
-            task.ResponsibleUser = user;
+            return NoContent();
+        }
 
-            await _context.SaveChangesAsync();
+        [HttpGet("by-process-instance/{processInstanceId}")]
+        public async Task<IActionResult> GetTasksByProcessInstance(int processInstanceId, CancellationToken cancellationToken)
+        {
+            var query = new Handler.BpmnInstance.Query.GetTasksForProcessInstance.GetTasksForProcessInstanceQuery(processInstanceId);
+            var result = await _mediator.Send(query, cancellationToken);
+
+            if (result == null || result.Count == 0)
+                return NotFound("Nenhuma task encontrada para esse processo.");
+
+            return Ok(result);
+        }
+
+
+        [HttpGet("user-process-instances/{userId}")]
+        public async Task<IActionResult> GetProcessInstancesWithUserTasks(string userId, CancellationToken cancellationToken)
+        {
+            var query = new Handler.Tasks.Querry.GetProcessInstancesWithUserTasks.GetProcessInstancesWithUserTasksQuery(userId, cancellationToken);
+            var result = await _mediator.Send(query, cancellationToken);
+
+            if (result == null || result.Count == 0)
+                return NotFound("Nenhuma task encontrada para esse processo.");
+
+            return Ok(result);
+        }
+
+
+        [HttpPut("update-status")]
+        public async Task<IActionResult> UpdateTaskStatus([FromBody] UpdateTaskStatusDto dto)
+        {
+            var command = new Handler.Tasks.Command.UpdateTaskStatus.UpdateTaskStatusCommand(dto.TaskId, dto.StatusId);
+            var result = await _mediator.Send(command);
+
+            if (!result)
+                return NotFound("Task ou Status não encontrado.");
 
             return NoContent();
         }

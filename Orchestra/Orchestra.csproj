@@ -29,4 +29,10 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Handler\Tasks\Querry\GetById\" />
+    <Folder Include="Handler\Tasks\Querry\GetAll\" />
+    <Folder Include="Handler\User\Query\GetUserByGroup\" />
+  </ItemGroup>
+
 </Project>

@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Orchestra.Data.Context;
+using Orchestra.Repoitories.Interfaces;
 
 namespace Orchestra.Repoitories
 {
@@ -7,7 +9,7 @@ namespace Orchestra.Repoitories
         private readonly DbContext _context;
         private readonly DbSet<T> _dbSet;
 
-        public GenericRepository(DbContext context)
+        public GenericRepository(ApplicationDbContext context)
         {
             _context = context;
             _dbSet = context.Set<T>();

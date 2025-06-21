@@ -2,7 +2,7 @@
 {
     public class AssignUserToTaskDto
     {
-        public Guid TaskId { get; set; }
+        public string TaskId { get; set; }
         public string UserId { get; set; }
     }
 }
