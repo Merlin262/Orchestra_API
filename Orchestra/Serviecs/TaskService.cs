@@ -46,13 +46,6 @@ namespace Orchestra.Services
             }).ToList();
         }
 
-        //public async Task<List<TaskWithUserDto>> GetTasksForProcessInstanceAsync(int processInstanceId, CancellationToken cancellationToken = default)
-        //{
-        //    var tasks = await _tasksRepository.GetByProcessInstanceIdAsync(processInstanceId, cancellationToken);
-
-        //    return tasks.Select(t => MapTaskWithUserDto(t)).ToList();
-        //}
-
         public async Task<List<Tasks>> GetTasksByProcessInstanceIdAsync(int processInstanceId, CancellationToken cancellationToken = default)
         {
             return await _tasksRepository.GetByProcessInstanceIdAsync(processInstanceId, cancellationToken);

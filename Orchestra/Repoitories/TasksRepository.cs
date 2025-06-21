@@ -26,7 +26,6 @@ namespace Orchestra.Repoitories
             return await _context.Tasks
                 .Where(t => t.BpmnProcessId == processInstanceId)
                 .Include(t => t.ResponsibleUser)
-                .Include(t => t.Status)
                 .ToListAsync(cancellationToken);
         }
 

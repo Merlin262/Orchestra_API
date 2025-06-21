@@ -2,6 +2,7 @@
 {
     public interface IBpmnBaselineService
     {
-        List<string> ExtractPoolNames(string xmlContent);
+        public List<string> ExtractPoolNames(string xmlContent);
+        public string FixDataObjectToDataObjectReference(string xmlContent);
     }
 }
