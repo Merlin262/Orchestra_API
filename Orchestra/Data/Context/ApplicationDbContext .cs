@@ -12,5 +12,18 @@ namespace Orchestra.Data.Context
         public DbSet<BpmnProcessInstance> bpmnProcessInstances => Set<BpmnProcessInstance>();
         public DbSet<User> Users => Set<User>();
         public DbSet<Tasks> Tasks => Set<Tasks>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<User>()
+                .Property(u => u.Roles)
+                .HasConversion(
+                    roles => string.Join(',', roles),
+                    value => value.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
+                );
+
+            base.OnModelCreating(modelBuilder);
+        }
+
     }
 }
