@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Orchestra.Data.Context;
 using Orchestra.Models;
 using Orchestra.Serviecs;
+using Orchestra.Serviecs.Intefaces;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -11,12 +12,12 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
     public class BpmnProcessCommandHandler : IRequestHandler<BpmnProcessCommand, BpmnProcessBaseline>
     {
         private readonly ApplicationDbContext _context;
-        private readonly BpmnBaselineService _bpmnBaselineService;
+        private readonly IBpmnBaselineService _bpmnBaselineService;
 
-        public BpmnProcessCommandHandler(ApplicationDbContext dbContext)
+        public BpmnProcessCommandHandler(ApplicationDbContext dbContext, IBpmnBaselineService bpmnBaselineService)
         {
             _context = dbContext;
-            _bpmnBaselineService = new BpmnBaselineService();
+            _bpmnBaselineService = bpmnBaselineService;
         }
 
         public async Task<BpmnProcessBaseline> Handle(BpmnProcessCommand request, CancellationToken cancellationToken)
@@ -26,6 +27,9 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
             {
                 xmlContent = await reader.ReadToEndAsync();
             }
+
+            // Corrige os dataObject para dataObjectReference
+            xmlContent = _bpmnBaselineService.FixDataObjectToDataObjectReference(xmlContent);
 
             string? processName = ExtractProcessNameFromXml(xmlContent);
 
