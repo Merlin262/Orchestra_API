@@ -1,3 +1,4 @@
+
 name: Trigger auto deployment for orchestra
 
 # When this action will be executed
@@ -44,5 +45,3 @@ jobs:
           imageToBuild: orchestra20250622192731.azurecr.io/orchestra:${{ github.sha }}
           _buildArgumentsKey_: |
             _buildArgumentsValues_
-
-
