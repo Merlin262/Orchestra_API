@@ -1,4 +1,5 @@
-name: Trigger auto deployment for orchestraAdd commentMore actions
+
+name: Trigger auto deployment for orchestra
 
 # When this action will be executed
 on:
@@ -42,5 +43,5 @@ jobs:
           containerAppName: orchestra
           resourceGroup: Orchestra-rg
           imageToBuild: orchestra20250622192731.azurecr.io/orchestra:${{ github.sha }}
-          _buildArgumentsKey_: |Add commentMore actions
+          _buildArgumentsKey_: |
             _buildArgumentsValues_
