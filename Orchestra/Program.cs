@@ -13,9 +13,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowLocalhost3000",
+    options.AddPolicy("AllowFrontend",
         policy => policy
-            .WithOrigins("http://localhost:3000")
+            .WithOrigins(
+                "http://localhost:3000",
+                "https://lively-pond-0eeb6930f.2.azurestaticapps.net"
+            )
             .AllowAnyHeader()
             .AllowAnyMethod());
 });
