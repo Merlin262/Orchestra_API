@@ -59,6 +59,12 @@ builder.Services.AddScoped<IBpmnBaselineService, BpmnBaselineService>();
 // Build do app (deve vir depois da configura��o de servi�os)
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.Migrate();
+}
+
 app.UseCors("AllowLocalhost3000");
 
 // Pipeline de requisi��es
@@ -68,7 +74,6 @@ if (app.Environment.IsDevelopment() || app.Environment.IsStaging() || app.Enviro
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    // app.MapOpenApi(); // pode ativar se quiser servir o OpenAPI direto
 }
 
 app.UseHttpsRedirection();
