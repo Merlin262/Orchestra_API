@@ -14,7 +14,7 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["Orchestra/Orchestra.csproj", "Orchestra/"]
 COPY ["Orchestra.AppHost/Orchestra.AppHost.csproj", "Orchestra.AppHost/"]
-COPY ["Orchestra.ServiceDefaults/Orchestra.ServiceDefaults.csproj", "Orchestra.ServiceDefaults/"]
+#COPY ["Orchestra.ServiceDefaults/Orchestra.ServiceDefaults.csproj", "Orchestra.ServiceDefaults/"]
 RUN dotnet restore "Orchestra/Orchestra.csproj"
 COPY . .
 WORKDIR "/src/Orchestra"
