@@ -64,7 +64,7 @@ app.UseCors("AllowLocalhost3000");
 // Pipeline de requisi��es
 app.MapDefaultEndpoints();
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsStaging() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
