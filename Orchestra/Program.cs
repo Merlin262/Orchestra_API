@@ -10,6 +10,7 @@ using Orchestra.Repoitories;
 using Orchestra.Repoitories.Interfaces;
 using Orchestra.Services;
 using Orchestra.Serviecs.Intefaces;
+using Orchestra.Serviecs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -88,7 +89,7 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-app.UseCors("AllowLocalhost3000");
+app.UseCors("AllowFrontend");
 
 // Pipeline de requisi��es
 app.MapDefaultEndpoints();

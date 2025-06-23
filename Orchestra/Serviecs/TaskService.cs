@@ -41,7 +41,7 @@ namespace Orchestra.Services
                     UserName = t.ResponsibleUser.UserName,
                     Email = t.ResponsibleUser.Email,
                     FullName = t.ResponsibleUser.FullName,
-                    Role = t.ResponsibleUser.Role
+                    //Role = t.ResponsibleUser.Role
                 }
             }).ToList();
         }
@@ -111,7 +111,7 @@ namespace Orchestra.Services
                     UserName = t.ResponsibleUser.UserName,
                     Email = t.ResponsibleUser.Email,
                     FullName = t.ResponsibleUser.FullName,
-                    Role = t.ResponsibleUser.Role
+                    //Role = t.ResponsibleUser.Role
                 }
             };
         }
