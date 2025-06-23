@@ -2,11 +2,13 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Orchestra.Data.Context;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
 using Orchestra.Models.Orchestra.Models;
 using Orchestra.Repoitories;
 using Orchestra.Repoitories.Interfaces;
 using Orchestra.Services;
-using Orchestra.Serviecs;
 using Orchestra.Serviecs.Intefaces;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,13 +25,31 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod());
 });
 
-// Configura��es de servi�os
 builder.AddServiceDefaults();
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddOpenApi();
+
+// JWT Config
+
+builder.Services.AddScoped<JwtService>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!);
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(key)
+        };
+    });
 
 // Controllers
 builder.Services.AddControllers();
