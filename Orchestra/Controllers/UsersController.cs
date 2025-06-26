@@ -21,9 +21,46 @@ namespace Orchestra.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<object>> GetUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            return await _context.Users.ToListAsync();
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1) pageSize = 10;
+
+            var totalUsers = await _context.Users.CountAsync();
+            var users = await _context.Users
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var result = new
+            {
+                TotalItems = totalUsers,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                Items = users
+            };
+
+            return Ok(result);
+        }
+
+        // GET: api/Users/Roles
+        [HttpGet("Roles")]
+        public async Task<ActionResult<IEnumerable<object>>> GetRolesCount()
+        {
+            var users = await _context.Users.ToListAsync();
+
+            var rolesCount = users
+                .SelectMany(u => u.Roles ?? new List<string>())
+                .GroupBy(role => role)
+                .Select(g => new
+                {
+                    Role = g.Key,
+                    Count = g.Count()
+                })
+                .OrderByDescending(r => r.Count)
+                .ToList();
+
+            return Ok(rolesCount);
         }
 
         // GET: api/Users/5

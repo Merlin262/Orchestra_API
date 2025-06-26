@@ -1,4 +1,6 @@
-﻿namespace Orchestra.Models
+﻿using Orchestra.Enums;
+
+namespace Orchestra.Models
 {
     public class User
     {
@@ -11,5 +13,6 @@
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public ICollection<Tasks> AssignedTasks { get; set; }
+        public ProfileTypeEnum ProfileType { get; set; }
     }
 }
