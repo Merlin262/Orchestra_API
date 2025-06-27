@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ using System.Xml.Linq;
 
 namespace Orchestra.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class BpmnController : ControllerBase
