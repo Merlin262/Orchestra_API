@@ -22,7 +22,8 @@ namespace Orchestra.Serviecs
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim("FullName", user.FullName)
+                new Claim("FullName", user.FullName),
+                new Claim("ProfileType", user.ProfileType.ToString()),
             };
 
             foreach (var role in user.Roles)

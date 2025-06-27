@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Orchestra.Enums;
+using System.ComponentModel.DataAnnotations;
 namespace Orchestra.Dtos
 {
     public class UserRegisterDto
@@ -16,5 +17,6 @@ namespace Orchestra.Dtos
         [Required]
         [MinLength(6)]
         public string Password { get; set; }
+        public ProfileTypeEnum ProfileType { get; set; }
     }
 }
