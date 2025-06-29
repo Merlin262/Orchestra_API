@@ -23,7 +23,8 @@ builder.Services.AddCors(options =>
                 "https://lively-pond-0eeb6930f.2.azurestaticapps.net"
             )
             .AllowAnyHeader()
-            .AllowAnyMethod());
+            .AllowAnyMethod()
+            .AllowCredentials());
 });
 
 builder.AddServiceDefaults();
