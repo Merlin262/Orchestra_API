@@ -23,7 +23,7 @@ namespace Orchestra.Handler.Tasks.Command.AssignUser
             if (user == null)
                 return false;
 
-            var result = await _taskService.AssignUserToTaskAsync(request.TaskId, request.UserId, cancellationToken);
+            var result = await _taskService.AssignUserToTaskAsync(request.ProcessInstanceId, request.TaskId, request.UserId, cancellationToken);
             return result;
         }
     }

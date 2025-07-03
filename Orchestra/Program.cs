@@ -1,16 +1,19 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Orchestra.Data.Context;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using Orchestra.Data.Context;
+using Orchestra.GraphQLConfig;
 using Orchestra.Models.Orchestra.Models;
 using Orchestra.Repoitories;
 using Orchestra.Repoitories.Interfaces;
 using Orchestra.Services;
-using Orchestra.Serviecs.Intefaces;
 using Orchestra.Serviecs;
+using Orchestra.Serviecs.Intefaces;
+using System.Text;
+using HotChocolate.AspNetCore;
+using Orchestra.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,7 +38,6 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddOpenApi();
 
 // JWT Config
-
 builder.Services.AddScoped<JwtService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -52,6 +54,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             IssuerSigningKey = new SymmetricSecurityKey(key)
         };
     });
+
+//GraphQL
+builder.Services
+       .AddGraphQLServer()
+       .AddQueryType<BpmnProcessInstanceQuery>()
+       .AddProjections()
+       .AddFiltering()
+       .AddSorting();
+
+// SignalR
+builder.Services.AddSignalR();
 
 // Controllers
 builder.Services.AddControllers();
@@ -84,6 +97,8 @@ builder.Services.AddScoped<IBpmnBaselineService, BpmnBaselineService>();
 // Build do app (deve vir depois da configura��o de servi�os)
 var app = builder.Build();
 
+app.MapHub<TasksHub>("/hubs/taskshub");
+
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -105,5 +120,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.UseAuthorization();
 app.MapControllers();
+app.MapGraphQL();
 
 app.Run();
