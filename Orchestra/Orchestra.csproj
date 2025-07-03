@@ -10,6 +10,8 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="HotChocolate.AspNetCore" Version="15.1.7" />
+    <PackageReference Include="HotChocolate.Data.EntityFramework" Version="15.1.7" />
     <PackageReference Include="MediatR" Version="12.5.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.5" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
@@ -33,8 +35,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Handler\Tasks\Querry\GetById\" />
-    <Folder Include="Handler\Tasks\Querry\GetAll\" />
+    <Folder Include="Handler\Tasks\Query\GetById\" />
+    <Folder Include="Handler\Tasks\Query\GetAll\" />
     <Folder Include="Handler\User\Query\GetUserByGroup\" />
   </ItemGroup>
 

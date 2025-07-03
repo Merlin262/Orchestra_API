@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Orchestra.Data.Context;
 using Orchestra.Dtos;
@@ -12,6 +13,8 @@ using Orchestra.Handler.BpmnInstance.Command.DeleteInstance;
 using Orchestra.Handler.BpmnInstance.Query.GetById;
 using Orchestra.Handler.BpmnInstance.Query.GetProcessInstance;
 using Orchestra.Handler.BpmnInstance.Query.GetTasksForProcessInstance;
+using Orchestra.Handler.Tasks.Querry.GetTaskWithUser;
+using Orchestra.Hubs;
 using Orchestra.Models;
 using Orchestra.Models.Orchestra.Models;
 using Orchestra.Services;
@@ -28,15 +31,19 @@ namespace Orchestra.Controllers
     [ApiController]
     public class BpmnProcessInstancesController : ControllerBase
     {
-        //private readonly ApplicationDbContext _context;
-        //private readonly IBpmnProcessInstanceService _bpmnProcessInstanceService;
         private readonly IMediator _mediator;
+        private readonly IHubContext<TasksHub> _hubContext;
+        private readonly ILogger<BpmnProcessInstancesController> _logger;
 
-        public BpmnProcessInstancesController(ApplicationDbContext context, IMediator mediator)
+        public BpmnProcessInstancesController(
+            ApplicationDbContext context,
+            IMediator mediator,
+            IHubContext<TasksHub> hubContext,
+            ILogger<BpmnProcessInstancesController> logger)
         {
-            //_context = context;
-            //_bpmnProcessInstanceService = bpmnProcessInstanceService;
             _mediator = mediator;
+            _hubContext = hubContext;
+            _logger = logger;
         }
 
         // GET: api/BpmnProcessInstances
@@ -57,6 +64,12 @@ namespace Orchestra.Controllers
             {
                 return NotFound();
             }
+
+            // Log antes de enviar pelo SignalR
+            _logger.LogInformation("Enviando evento SignalR ProcessInstanceFetched: ProcessInstanceId={ProcessInstanceId}", bpmnProcessInstance.Id);
+
+            // Envia mensagem para todos os clientes conectados ao hub
+            await _hubContext.Clients.All.SendAsync("ProcessInstanceFetched", bpmnProcessInstance);
 
             return bpmnProcessInstance;
         }
@@ -136,6 +149,17 @@ namespace Orchestra.Controllers
         public async Task<ActionResult<IEnumerable<TaskWithUserDto>>> GetTasksForProcessInstance(int id)
         {
             var result = await _mediator.Send(new GetTasksForProcessInstanceQuery(id));
+            if (result == null || !result.Any())
+                return NotFound();
+
+            return Ok(result);
+        }
+
+        // GET: api/BpmnProcessInstances/{id}/tasks-with-users-status
+        [HttpGet("{id}/tasks-with-users-status")]
+        public async Task<ActionResult<IEnumerable<TaskWithUserDto>>> GetTasksWithUsersAndStatus(int id)
+        {
+            var result = await _mediator.Send(new GetTaskWithUserQuery(id));
             if (result == null || !result.Any())
                 return NotFound();
 
