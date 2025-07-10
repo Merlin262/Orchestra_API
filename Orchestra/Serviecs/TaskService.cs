@@ -135,12 +135,12 @@ namespace Orchestra.Services
             return true;
         }
 
-        public async Task<bool> AssignUserToTaskAsync(string xmlTaskId, string userId, CancellationToken cancellationToken = default)
+        public async Task<bool> AssignUserToTaskAsync(int processInstanceId, string xmlTaskId, string userId, CancellationToken cancellationToken = default)
         {
             // Busca a task pelo repositório
-            var task = (await _tasksRepository
-                .GetAllAsync(cancellationToken))
-                .FirstOrDefault(t => t.XmlTaskId == xmlTaskId);
+            var task = (await _tasksRepository.GetAllAsync(cancellationToken))
+                .FirstOrDefault(t => t.XmlTaskId == xmlTaskId && t.BpmnProcessId == processInstanceId);
+
 
             if (task == null)
                 return false;

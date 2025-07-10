@@ -1,11 +1,11 @@
 ﻿using MediatR;
-using Orchestra.Data.Context;
+using Orchestra.Dtos;
 using Orchestra.Repoitories.Interfaces;
 using Orchestra.Serviecs.Intefaces;
 
 namespace Orchestra.Handler.Tasks.Command.UpdateTaskStatus
 {
-    public class UpdateTaskStatusCommandHandler : IRequestHandler<UpdateTaskStatusCommand, bool>
+    public class UpdateTaskStatusCommandHandler : IRequestHandler<UpdateTaskStatusCommand, UpdateTaskStatusResultDto>
     {
         private readonly ITasksRepository _tasksRepository;
         private readonly ITaskService _taskService;
@@ -16,9 +16,17 @@ namespace Orchestra.Handler.Tasks.Command.UpdateTaskStatus
             _taskService = taskService;
         }
 
-        public async Task<bool> Handle(UpdateTaskStatusCommand request, CancellationToken cancellationToken)
+        public async Task<UpdateTaskStatusResultDto> Handle(UpdateTaskStatusCommand request, CancellationToken cancellationToken)
         {
-            return await _taskService.UpdateTaskStatusAsync(request.TaskId, request.StatusId, cancellationToken);
+            var success = await _taskService.UpdateTaskStatusAsync(request.TaskId, request.StatusId, cancellationToken);
+
+            var task = await _tasksRepository.GetByIdAsync(request.TaskId, cancellationToken);
+
+            return new UpdateTaskStatusResultDto
+            {
+                Success = success,
+                XmlTaskId = task?.XmlTaskId
+            };
         }
     }
 }

@@ -10,6 +10,8 @@ using Microsoft.EntityFrameworkCore;
 using Orchestra.Data.Context;
 using Orchestra.Dtos;
 using Orchestra.Models;
+using Microsoft.AspNetCore.SignalR;
+using Orchestra.Hubs;
 
 namespace Orchestra.Controllers
 {
@@ -20,11 +22,19 @@ namespace Orchestra.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IMediator _mediator;
+        private readonly IHubContext<TasksHub> _hubContext;
+        private readonly ILogger<TasksController> _logger;
 
-        public TasksController(ApplicationDbContext context, IMediator mediator)
+        public TasksController(
+            ApplicationDbContext context,
+            IMediator mediator,
+            IHubContext<TasksHub> hubContext,
+            ILogger<TasksController> logger)
         {
             _context = context;
             _mediator = mediator;
+            _hubContext = hubContext;
+            _logger = logger;
         }
 
         // GET: api/Tasks
@@ -114,11 +124,17 @@ namespace Orchestra.Controllers
         [HttpPut("assign-user")]
         public async Task<IActionResult> AssignUserToTask([FromBody] AssignUserToTaskDto dto)
         {
-            var command = new Handler.Tasks.Command.AssignUser.AssignUserToTaskCommand(dto.TaskId, dto.UserId);
+            var command = new Handler.Tasks.Command.AssignUser.AssignUserToTaskCommand(dto.TaskId, dto.UserId, dto.ProcessInstanceId);
             var result = await _mediator.Send(command);
 
             if (!result)
                 return NotFound("Task ou Usuário não encontrado.");
+
+            // Log antes de enviar pelo SignalR
+            _logger.LogInformation("Enviando evento SignalR UserAssignedToTask: TaskId={TaskId}, UserId={UserId}", dto.TaskId, dto.UserId);
+
+            // Notifica todos os clientes conectados via SignalR
+            await _hubContext.Clients.All.SendAsync("UserAssignedToTask", new { TaskId = dto.TaskId, UserId = dto.UserId });
 
             return NoContent();
         }
@@ -145,6 +161,10 @@ namespace Orchestra.Controllers
             if (result == null || result.Count == 0)
                 return NotFound("Nenhuma task encontrada para esse processo.");
 
+            // Log e notificação SignalR
+            _logger.LogInformation("Enviando evento SignalR UserProcessInstancesFetched: UserId={UserId}, InstancesCount={Count}", userId, result.Count);
+            await _hubContext.Clients.All.SendAsync("UserProcessInstancesFetched", new { UserId = userId, Instances = result });
+
             return Ok(result);
         }
 
@@ -155,11 +175,16 @@ namespace Orchestra.Controllers
             var command = new Handler.Tasks.Command.UpdateTaskStatus.UpdateTaskStatusCommand(dto.TaskId, dto.StatusId);
             var result = await _mediator.Send(command);
 
-            if (!result)
+            if (result == null || !result.Success)
                 return NotFound("Task ou Status não encontrado.");
+
+            // Log antes de enviar pelo SignalR
+            _logger.LogInformation("Enviando evento SignalR ProcessInstanceFetched: TaskId={TaskId}, StatusId={StatusId}", result.XmlTaskId, dto.StatusId);
+
+            // Notifica todos os clientes sobre a atualização
+            await _hubContext.Clients.All.SendAsync("ProcessInstanceFetched", new { TaskId = result.XmlTaskId, StatusId = dto.StatusId });
 
             return NoContent();
         }
-
     }
 }
