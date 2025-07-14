@@ -186,5 +186,17 @@ namespace Orchestra.Controllers
 
             return NoContent();
         }
+
+        [HttpPut("unassign-user/{taskId}")]
+        public async Task<IActionResult> UnassignUserFromTask([FromRoute] Guid taskId)
+        {
+            var command = new Handler.Tasks.Command.UnassignUser.UnassignUserFromTaskCommand(taskId);
+            var result = await _mediator.Send(command);
+
+            if (!result)
+                return NotFound("Task não encontrada ou nenhum usuário atribuído.");
+
+            return NoContent();
+        }
     }
 }

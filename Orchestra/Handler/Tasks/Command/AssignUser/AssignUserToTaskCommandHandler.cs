@@ -18,7 +18,6 @@ namespace Orchestra.Handler.Tasks.Command.AssignUser
 
         public async Task<bool> Handle(AssignUserToTaskCommand request, CancellationToken cancellationToken)
         {
-            // Opcional: pode validar se o usuário existe antes de tentar atribuir
             var user = await _userService.GetByIdAsync(request.UserId, cancellationToken);
             if (user == null)
                 return false;

@@ -11,6 +11,7 @@ namespace Orchestra.Serviecs.Intefaces
         Task UpdateAsync(BpmnProcessInstance entity, CancellationToken cancellationToken);
         Task DeleteAsync(BpmnProcessInstance entity, CancellationToken cancellationToken);
         Task<BpmnProcessBaseline?> GetBaselineAsync(int baselineId);
+        Task<double> GetBaselineVersionById(double baselineId);
         Task<BpmnProcessInstance> CreateInstanceAsync(BpmnProcessBaseline baseline);
         Task<(List<ProcessStep> steps, Dictionary<string, ProcessStep> stepMap)> ParseAndCreateStepsAsync(BpmnProcessInstance instance, string? xmlContent);
         Task<List<Tasks>> ParseAndCreateTasksAsync(BpmnProcessInstance instance, string? xmlContent, Dictionary<string, ProcessStep> stepMap);

@@ -148,5 +148,13 @@ namespace Orchestra.Services
 
             return tasks;
         }
+
+        public async Task<double> GetBaselineVersionById(double baselineId)
+        {
+            var baseline = await _baselineRepository.GetByIdAsync((int)baselineId);
+            if (baseline == null || !baseline.Version.HasValue)
+                return 0.0;
+            return baseline.Version.Value;
+        }
     }
 }

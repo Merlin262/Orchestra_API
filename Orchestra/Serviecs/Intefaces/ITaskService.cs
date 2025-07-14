@@ -12,5 +12,6 @@ namespace Orchestra.Serviecs.Intefaces
         List<ProcessInstanceWithTasksDto> MapProcessInstancesWithTasks(List<BpmnProcessInstance> processInstances, List<Tasks> userTasks);
         Task<bool> UpdateTaskStatusAsync(Guid taskId, int statusId, CancellationToken cancellationToken = default);
         Task<bool> AssignUserToTaskAsync(int bpmnProcessInstanceId, string xmlTaskId, string userId, CancellationToken cancellationToken = default);
+        Task<bool> UnassignUserFromTaskAsync(Guid taskId, CancellationToken cancellationToken = default);
     }
 }

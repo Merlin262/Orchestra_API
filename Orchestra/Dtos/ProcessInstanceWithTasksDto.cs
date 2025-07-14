@@ -9,5 +9,6 @@
         public int BpmnProcessBaselineId { get; set; }
         public List<string> PoolNames { get; set; }
         public List<TaskWithUserDto> Tasks { get; set; }
+        public double? version { get; set; }
     }
 }

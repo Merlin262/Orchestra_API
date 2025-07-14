@@ -157,5 +157,19 @@ namespace Orchestra.Services
 
             return true;
         }
+
+        public async Task<bool> UnassignUserFromTaskAsync(Guid taskId, CancellationToken cancellationToken = default)
+        {
+            var task = await _tasksRepository.GetByIdAsync(taskId, cancellationToken);
+            if (task == null || string.IsNullOrEmpty(task.ResponsibleUserId))
+                return false;
+
+            task.ResponsibleUserId = null;
+            task.ResponsibleUser = null;
+
+            await _tasksRepository.UpdateAsync(task, cancellationToken);
+
+            return true;
+        }
     }
 }
