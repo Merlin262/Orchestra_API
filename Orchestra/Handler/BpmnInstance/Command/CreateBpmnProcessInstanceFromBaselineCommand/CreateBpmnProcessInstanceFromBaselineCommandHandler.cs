@@ -17,7 +17,7 @@ namespace Orchestra.Handler.BpmnInstance.Command.CreateBpmnProcessInstanceFromBa
 
         public async Task<BpmnProcessInstance> Handle(CreateBpmnProcessInstanceFromBaselineCommand request, CancellationToken cancellationToken)
         {
-            var baseline = await _service.GetBaselineAsync(request.BaselineId);
+            var baseline = await _service.GetBaselineAsync(request.BaselineId, cancellationToken);
             if (baseline == null)
                 throw new Exception($"BpmnProcessBaseline com id {request.BaselineId} não encontrado.");
 

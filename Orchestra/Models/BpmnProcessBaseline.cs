@@ -9,6 +9,6 @@
         public List<string> PoolNames { get; set; } = new();
         public string? CreatedBy { get; set; }
         public User? CreatedByUser { get; set; }
-        public double? Version { get; set; }
+        public double Version { get; set; }
     }
 }

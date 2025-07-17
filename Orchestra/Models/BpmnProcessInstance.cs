@@ -14,6 +14,7 @@ namespace Orchestra.Models
             public BpmnProcessBaseline BpmnProcessBaseline { get; set; } = null!;
             public List<string> PoolNames { get; set; } = new();
             public StatusEnum Status { get; set; }
+            public double version { get; set; }
         }
     }
 }

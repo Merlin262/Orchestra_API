@@ -22,24 +22,15 @@ namespace Orchestra.Handler.BpmnInstance.Query.GetProcessInstance
         {
             var instances = await _service.GetAllAsync(cancellationToken);
 
-            var results = new List<GetBpmnProcessInstancesQueryResult>();
-
-            foreach (var instance in instances)
+            var results = instances.Select(instance => new GetBpmnProcessInstancesQueryResult
             {
-                var version = await _service.GetBaselineVersionById(instance.BpmnProcessBaselineId);
-
-                var result = new GetBpmnProcessInstancesQueryResult
-                {
-                    id = instance.Id,
-                    Name = instance.Name,
-                    XmlContent = instance.XmlContent,
-                    CreatedAt = instance.CreatedAt,
-                    BpmnProcessBaselineId = instance.BpmnProcessBaselineId,
-                    Version = version
-                };
-
-                results.Add(result);
-            }
+                id = instance.Id,
+                Name = instance.Name,
+                XmlContent = instance.XmlContent,
+                CreatedAt = instance.CreatedAt,
+                BpmnProcessBaselineId = instance.BpmnProcessBaselineId,
+                Version = instance.version
+            });
 
             return results;
         }

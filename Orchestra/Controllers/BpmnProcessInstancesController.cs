@@ -116,7 +116,6 @@ namespace Orchestra.Controllers
         }
 
 
-        // DELETE: api/BpmnProcessInstances/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBpmnProcessInstance(int id)
         {

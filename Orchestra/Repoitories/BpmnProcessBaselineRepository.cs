@@ -5,18 +5,12 @@ using Orchestra.Repoitories.Interfaces;
 
 namespace Orchestra.Repoitories
 {
-    public class BpmnProcessBaselineRepository : IBpmnProcessBaselineRepository
+    public class BpmnProcessBaselineRepository : GenericRepository<BpmnProcessBaseline>, IBpmnProcessBaselineRepository
     {
-        private readonly ApplicationDbContext _context;
 
-        public BpmnProcessBaselineRepository(ApplicationDbContext context)
+        public BpmnProcessBaselineRepository(ApplicationDbContext context) : base(context)
         {
-            _context = context;
         }
 
-        public async Task<BpmnProcessBaseline?> GetByIdAsync(int id)
-        {
-            return await _context.BpmnProcess.FirstOrDefaultAsync(x => x.Id == id);
-        }
     }
 }

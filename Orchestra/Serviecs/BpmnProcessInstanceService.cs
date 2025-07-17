@@ -9,14 +9,6 @@ using System.Xml.Linq;
 
 namespace Orchestra.Services
 {
-    //public interface IBpmnProcessInstanceService : IGenericRepository<BpmnProcessInstance>
-    //{
-    //    Task<BpmnProcessBaseline?> GetBaselineAsync(int baselineId);
-    //    Task<BpmnProcessInstance> CreateInstanceAsync(BpmnProcessBaseline baseline);
-    //    Task<(List<ProcessStep> steps, Dictionary<string, ProcessStep> stepMap)> ParseAndCreateStepsAsync(BpmnProcessInstance instance, string? xmlContent);
-    //    Task<List<Tasks>> ParseAndCreateTasksAsync(BpmnProcessInstance instance, string? xmlContent, Dictionary<string, ProcessStep> stepMap);
-    //}
-
     public class BpmnProcessInstanceService : IBpmnProcessInstanceService
     {
         private readonly IBpmnProcessBaselineRepository _baselineRepository;
@@ -42,8 +34,6 @@ namespace Orchestra.Services
         public Task<BpmnProcessInstance?> GetByIdAsync(int id, CancellationToken cancellationToken)
             => _genericRepository.GetByIdAsync(id, cancellationToken);
 
-        //public async Task AddAsync(BpmnProcessInstance entity, CancellationToken cancellationToken)
-        //    => await _genericRepository.AddAsync(entity, cancellationToken);
         public async Task AddAsync(BpmnProcessInstance entity, CancellationToken cancellationToken)
         {
             await _genericRepository.AddAsync(entity, cancellationToken);
@@ -55,9 +45,9 @@ namespace Orchestra.Services
         public async Task DeleteAsync(BpmnProcessInstance entity, CancellationToken cancellationToken)
             => await _genericRepository.DeleteAsync(entity, cancellationToken);
 
-        public async Task<BpmnProcessBaseline?> GetBaselineAsync(int baselineId)
+        public async Task<BpmnProcessBaseline?> GetBaselineAsync(int baselineId, CancellationToken cancellationToken)
         {
-            return await _baselineRepository.GetByIdAsync(baselineId);
+            return await _baselineRepository.GetByIdAsync(baselineId, cancellationToken);
         }
 
         public async Task<BpmnProcessInstance> CreateInstanceAsync(BpmnProcessBaseline baseline)
@@ -67,7 +57,8 @@ namespace Orchestra.Services
                 Name = baseline.Name,
                 XmlContent = baseline.XmlContent,
                 BpmnProcessBaselineId = baseline.Id,
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                version = baseline.Version
             };
             await AddAsync(instance, default);
             return instance;
@@ -147,14 +138,6 @@ namespace Orchestra.Services
             }
 
             return tasks;
-        }
-
-        public async Task<double> GetBaselineVersionById(double baselineId)
-        {
-            var baseline = await _baselineRepository.GetByIdAsync((int)baselineId);
-            if (baseline == null || !baseline.Version.HasValue)
-                return 0.0;
-            return baseline.Version.Value;
         }
     }
 }

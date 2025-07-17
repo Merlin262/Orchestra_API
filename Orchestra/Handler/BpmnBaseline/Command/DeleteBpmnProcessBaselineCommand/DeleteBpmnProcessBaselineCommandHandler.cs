@@ -1,26 +1,30 @@
 ﻿using MediatR;
-using Orchestra.Data.Context;
+using Orchestra.Serviecs.Intefaces;
 
 namespace Orchestra.Handler.BpmnBaseline.Command.DeleteBpmnProcessBaselineCommand
 {
     public class DeleteBpmnProcessBaselineCommandHandler : IRequestHandler<DeleteBpmnProcessBaselineCommand, bool>
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IBpmnBaselineService _bpmnBaselineService;
 
-        public DeleteBpmnProcessBaselineCommandHandler(ApplicationDbContext context)
+        public DeleteBpmnProcessBaselineCommandHandler(IBpmnBaselineService bpmnBaselineService)
         {
-            _context = context;
+            _bpmnBaselineService = bpmnBaselineService;
         }
 
         public async Task<bool> Handle(DeleteBpmnProcessBaselineCommand request, CancellationToken cancellationToken)
         {
-            var process = await _context.BpmnProcess.FindAsync(new object[] { request.Id }, cancellationToken);
+            var baseline = await _bpmnBaselineService.GetByIdAsync(request.Id, cancellationToken);
 
-            if (process == null)
+            if (baseline == null)
                 return false;
 
-            _context.BpmnProcess.Remove(process);
-            await _context.SaveChangesAsync(cancellationToken);
+            var hasRelatedInstances = await _bpmnBaselineService.HasRelatedInstancesAsync(request.Id, cancellationToken);
+
+            if (hasRelatedInstances)
+                return false;
+
+            await _bpmnBaselineService.DeleteAsync(baseline, cancellationToken);
 
             return true;
         }
