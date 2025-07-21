@@ -6,5 +6,6 @@ namespace Orchestra.Repoitories.Interfaces
     {
         Task<BpmnProcessBaseline?> GetByIdAsync(int id, CancellationToken cancellationToken);
         Task<IEnumerable<BpmnProcessBaseline>> GetAllAsync(CancellationToken cancellationToken);
+        Task<BpmnProcessBaseline?> GetByBaselineIdAndVersionAsync(int baselineId, double version, CancellationToken cancellationToken);
     }
 }

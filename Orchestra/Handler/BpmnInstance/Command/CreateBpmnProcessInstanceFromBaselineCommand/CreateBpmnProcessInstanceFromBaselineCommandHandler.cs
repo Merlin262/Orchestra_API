@@ -21,7 +21,7 @@ namespace Orchestra.Handler.BpmnInstance.Command.CreateBpmnProcessInstanceFromBa
             if (baseline == null)
                 throw new Exception($"BpmnProcessBaseline com id {request.BaselineId} não encontrado.");
 
-            var instance = await _service.CreateInstanceAsync(baseline);
+            var instance = await _service.CreateInstanceAsync(baseline, request.Name, request.Description);
             (List<ProcessStep> _, Dictionary<string, ProcessStep> stepMap) = await _service.ParseAndCreateStepsAsync(instance, baseline.XmlContent);
             await _service.ParseAndCreateTasksAsync(instance, baseline.XmlContent, stepMap);
 

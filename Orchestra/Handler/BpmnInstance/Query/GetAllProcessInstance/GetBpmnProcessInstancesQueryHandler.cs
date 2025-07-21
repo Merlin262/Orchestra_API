@@ -29,7 +29,8 @@ namespace Orchestra.Handler.BpmnInstance.Query.GetProcessInstance
                 XmlContent = instance.XmlContent,
                 CreatedAt = instance.CreatedAt,
                 BpmnProcessBaselineId = instance.BpmnProcessBaselineId,
-                Version = instance.version
+                Version = instance.version,
+                Description = instance.Description
             });
 
             return results;

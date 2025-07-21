@@ -10,6 +10,7 @@ using Orchestra.Handler.BpmnInstance.Command;
 using Orchestra.Handler.BpmnInstance.Command.CreateBpmnProcessInstanceCommand;
 using Orchestra.Handler.BpmnInstance.Command.CreateBpmnProcessInstanceFromBaselineCommand;
 using Orchestra.Handler.BpmnInstance.Command.DeleteInstance;
+using Orchestra.Handler.BpmnInstance.Command.UpdateInstance;
 using Orchestra.Handler.BpmnInstance.Query.GetById;
 using Orchestra.Handler.BpmnInstance.Query.GetProcessInstance;
 using Orchestra.Handler.BpmnInstance.Query.GetTasksForProcessInstance;
@@ -29,17 +30,17 @@ namespace Orchestra.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class BpmnProcessInstancesController : ControllerBase
+    public class BpmnInstancesController : ControllerBase
     {
         private readonly IMediator _mediator;
         private readonly IHubContext<TasksHub> _hubContext;
-        private readonly ILogger<BpmnProcessInstancesController> _logger;
+        private readonly ILogger<BpmnInstancesController> _logger;
 
-        public BpmnProcessInstancesController(
+        public BpmnInstancesController(
             ApplicationDbContext context,
             IMediator mediator,
             IHubContext<TasksHub> hubContext,
-            ILogger<BpmnProcessInstancesController> logger)
+            ILogger<BpmnInstancesController> logger)
         {
             _mediator = mediator;
             _hubContext = hubContext;
@@ -74,38 +75,6 @@ namespace Orchestra.Controllers
             return bpmnProcessInstance;
         }
 
-
-        // PUT: api/BpmnProcessInstances/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        //[HttpPut("{id}")]
-        //public async Task<IActionResult> PutBpmnProcessInstance(int id, BpmnProcessInstance bpmnProcessInstance)
-        //{
-        //    if (id != bpmnProcessInstance.Id)
-        //    {
-        //        return BadRequest();
-        //    }
-
-        //    _context.Entry(bpmnProcessInstance).State = EntityState.Modified;
-
-        //    try
-        //    {
-        //        await _context.SaveChangesAsync();
-        //    }
-        //    catch (DbUpdateConcurrencyException)
-        //    {
-        //        if (!BpmnProcessInstanceExists(id))
-        //        {
-        //            return NotFound();
-        //        }
-        //        else
-        //        {
-        //            throw;
-        //        }
-        //    }
-
-        //    return NoContent();
-        //}
-
         // POST: api/BpmnProcessInstances
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
@@ -127,13 +96,13 @@ namespace Orchestra.Controllers
         }
 
 
-        // POST: api/BpmnProcessInstances/CreateFromBaseline/5
-        [HttpPost("CreateFromBaseline/{baselineId}")]
-        public async Task<ActionResult<BpmnProcessInstance>> CreateFromBaseline(int baselineId)
+        // POST: api/BpmnProcessInstances/CreateFromBaseline
+        [HttpPost("CreateFromBaseline")]
+        public async Task<ActionResult<BpmnProcessInstance>> CreateFromBaseline([FromBody] CreateFromBaselineRequestDto dto)
         {
             try
             {
-                var command = new CreateBpmnProcessInstanceFromBaselineCommand(baselineId);
+                var command = new CreateBpmnProcessInstanceFromBaselineCommand(dto.BaselineId, dto.Name, dto.Description);
                 var instance = await _mediator.Send(command);
                 return CreatedAtAction(nameof(GetBpmnProcessInstance), new { id = instance.Id }, instance);
             }
@@ -163,6 +132,17 @@ namespace Orchestra.Controllers
                 return NotFound();
 
             return Ok(result);
+        }
+
+        // PUT: api/BpmnProcessInstances/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateBpmnProcessInstance(int id, [FromBody] UpdateBpmnProcessInstanceDto dto)
+        {
+            var command = new UpdateBpmnProcessInstanceCommand(id, dto.Name, dto.Description);
+            var updated = await _mediator.Send(command);
+            if (updated == null)
+                return NotFound();
+            return Ok(updated);
         }
     }
 }

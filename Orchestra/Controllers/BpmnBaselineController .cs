@@ -7,9 +7,11 @@ using Orchestra.Data.Context;
 using Orchestra.Dtos;
 using Orchestra.Handler;
 using Orchestra.Handler.BpmnBaseline.Command.DeleteBpmnProcessBaselineCommand;
+using Orchestra.Handler.BpmnBaseline.Command.UpdateBpmnProcessBaselineCommand;
 using Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand;
 using Orchestra.Handler.BpmnBaseline.Querry.GetAll;
 using Orchestra.Handler.BpmnBaseline.Querry.GetById;
+using Orchestra.Models;
 using System.Xml.Linq;
 
 namespace Orchestra.Controllers
@@ -101,6 +103,35 @@ namespace Orchestra.Controllers
                 return NotFound();
 
             return Ok(baselines);
+        }
+
+        [HttpPut("{id}/update-baseline")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateBaselineWithNewBpmn(int id, [FromForm] UpdateBaselineWithNewBpmnRequest request, CancellationToken cancellationToken)
+        {
+            if (request.File == null || request.File.Length == 0)
+                return BadRequest("Arquivo inválido.");
+
+            var command = new UpdateBpmnProcessBaselineCommand
+            {
+                Id = id,
+                File = request.File,
+                Name = request.Name,
+                Description = request.Description,
+                //Version = request.Version
+            };
+
+            try
+            {
+                var result = await _mediator.Send(command, cancellationToken);
+                if (result == null)
+                    return NotFound();
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

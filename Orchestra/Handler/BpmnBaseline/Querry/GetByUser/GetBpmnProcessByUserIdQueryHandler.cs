@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using System.Linq;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Orchestra.Data.Context;
 using Orchestra.Dtos;
@@ -20,9 +21,15 @@ namespace Orchestra.Handler.BpmnBaseline.Querry.GetByUser
                 .Where(b => b.CreatedBy == request.UserId)
                 .ToListAsync(cancellationToken);
 
+            // Agrupa por Name e pega apenas a versão mais recente de cada processo
+            var latestBaselines = baselines
+                .GroupBy(b => b.Name)
+                .Select(g => g.OrderByDescending(x => x.Version).First())
+                .ToList();
+
             var userFullName = await GetUserFullNameByIdAsync(request.UserId, cancellationToken);
 
-            var result = baselines.Select(b => new BpmnProcessBaselineWithUserDto
+            var result = latestBaselines.Select(b => new BpmnProcessBaselineWithUserDto
             {
                 Id = b.Id,
                 Name = b.Name,

@@ -64,6 +64,21 @@ namespace Orchestra.Services
             return instance;
         }
 
+        public async Task<BpmnProcessInstance> CreateInstanceAsync(BpmnProcessBaseline baseline, string? name = null, string? description = null)
+        {
+            var instance = new BpmnProcessInstance
+            {
+                Name = name ?? baseline.Name,
+                XmlContent = baseline.XmlContent,
+                BpmnProcessBaselineId = baseline.Id,
+                CreatedAt = DateTime.UtcNow,
+                version = baseline.Version,
+                Description = description ?? baseline.Description
+            };
+            await AddAsync(instance, default);
+            return instance;
+        }
+
         public async Task<(List<ProcessStep> steps, Dictionary<string, ProcessStep> stepMap)> ParseAndCreateStepsAsync(BpmnProcessInstance instance, string? xmlContent)
         {
             var xDoc = XDocument.Parse(xmlContent ?? "");
