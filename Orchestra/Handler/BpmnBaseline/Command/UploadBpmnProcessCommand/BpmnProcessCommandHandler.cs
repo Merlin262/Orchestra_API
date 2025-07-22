@@ -42,10 +42,27 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
                 CreatedAt = DateTime.UtcNow,
                 PoolNames = poolNames,
                 CreatedBy = request.UserId,
-                Version = 1.0, // Versão inicial
+                Version = 1.0,
+                IsActive = true
             };
 
             _context.BpmnProcess.Add(process);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            // Save BaselineHistory (Upload)
+            var history = new BaselineHistory
+            {
+                BpmnProcessBaselineId = process.Id,
+                Name = process.Name,
+                XmlContent = process.XmlContent,
+                Description = process.Description,
+                Version = process.Version,
+                ChangedBy = process.CreatedBy,
+                ChangedAt = process.CreatedAt,
+                ChangeType = "Upload",
+                Responsible = process.CreatedBy // Pega o CreatedBy do BpmnProcessBaseline
+            };
+            _context.BaselineHistories.Add(history);
             await _context.SaveChangesAsync(cancellationToken);
 
             await ParseAndSaveSteps(xmlContent, process.Id, cancellationToken);

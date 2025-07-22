@@ -13,5 +13,6 @@ namespace Orchestra.Serviecs.Intefaces
         Task DeleteAsync(BpmnProcessBaseline baseline, CancellationToken cancellationToken);
         Task<BpmnProcessBaseline> AddBaselineAsync(BpmnProcessBaseline baseline, CancellationToken cancellationToken);
         Task<BpmnProcessBaseline?> GetByBaselineIdAndVersionAsync(int baselineId, double version, CancellationToken cancellationToken);
+        Task<BpmnProcessBaseline> UpdateBaselineAsync(BpmnProcessBaseline baseline, CancellationToken cancellationToken);
     }
 }

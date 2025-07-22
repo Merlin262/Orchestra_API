@@ -11,5 +11,6 @@
         public User? CreatedByUser { get; set; }
         public double Version { get; set; }
         public string? Description { get; set; }
+        public bool IsActive { get; set; }
     }
 }

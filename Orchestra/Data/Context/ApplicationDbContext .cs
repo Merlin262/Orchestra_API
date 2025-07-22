@@ -12,6 +12,7 @@ namespace Orchestra.Data.Context
         public DbSet<BpmnProcessInstance> bpmnProcessInstances => Set<BpmnProcessInstance>();
         public DbSet<User> Users => Set<User>();
         public DbSet<Tasks> Tasks => Set<Tasks>();
+        public DbSet<BaselineHistory> BaselineHistories => Set<BaselineHistory>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

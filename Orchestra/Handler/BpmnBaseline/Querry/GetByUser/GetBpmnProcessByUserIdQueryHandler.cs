@@ -21,7 +21,6 @@ namespace Orchestra.Handler.BpmnBaseline.Querry.GetByUser
                 .Where(b => b.CreatedBy == request.UserId)
                 .ToListAsync(cancellationToken);
 
-            // Agrupa por Name e pega apenas a versão mais recente de cada processo
             var latestBaselines = baselines
                 .GroupBy(b => b.Name)
                 .Select(g => g.OrderByDescending(x => x.Version).First())

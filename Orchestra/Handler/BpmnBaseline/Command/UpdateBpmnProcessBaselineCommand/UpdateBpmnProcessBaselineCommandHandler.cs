@@ -47,20 +47,40 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UpdateBpmnProcessBaselineComman
 
             var poolNames = _bpmnBaselineService.ExtractPoolNames(xmlContent);
 
-            var newBaseline = new BpmnProcessBaseline
-            {
-                Name = nameToCheck,
-                XmlContent = xmlContent,
-                CreatedAt = DateTime.UtcNow,
-                PoolNames = poolNames.Count > 0 ? poolNames : existingBaseline.PoolNames,
-                CreatedBy = existingBaseline.CreatedBy,
-                CreatedByUser = existingBaseline.CreatedByUser,
-                Version = versionToCheck, 
-                Description = request.Description ?? existingBaseline.Description
-            };
+            // Atualiza o baseline existente em vez de criar um novo
+            existingBaseline.Name = nameToCheck;
+            existingBaseline.XmlContent = xmlContent;
+            existingBaseline.CreatedAt = DateTime.UtcNow;
+            existingBaseline.PoolNames = poolNames.Count > 0 ? poolNames : existingBaseline.PoolNames;
+            existingBaseline.Version = versionToCheck;
+            existingBaseline.Description = request.Description ?? existingBaseline.Description;
+            existingBaseline.IsActive = true;
 
-            await _bpmnBaselineService.AddBaselineAsync(newBaseline, cancellationToken);
-            return newBaseline;
+            await _bpmnBaselineService.UpdateBaselineAsync(existingBaseline, cancellationToken);
+
+            // Save BaselineHistory (Edit)
+            var dbContext = _bpmnBaselineService as Orchestra.Serviecs.BpmnBaselineService;
+            var contextField = dbContext?.GetType().GetField("_bpmnProcessBaselineRepository", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var repo = contextField?.GetValue(dbContext) as Orchestra.Repoitories.BpmnProcessBaselineRepository;
+            var context = repo?.GetType().GetField("_context", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(repo) as Orchestra.Data.Context.ApplicationDbContext;
+            if (context != null)
+            {
+                var history = new BaselineHistory
+                {
+                    BpmnProcessBaselineId = existingBaseline.Id,
+                    Name = existingBaseline.Name,
+                    XmlContent = existingBaseline.XmlContent,
+                    Description = existingBaseline.Description,
+                    Version = existingBaseline.Version,
+                    ChangedBy = existingBaseline.CreatedBy,
+                    ChangedAt = existingBaseline.CreatedAt,
+                    ChangeType = "Edit",
+                    Responsible = existingBaseline.CreatedBy
+                };
+                context.BaselineHistories.Add(history);
+                await context.SaveChangesAsync(cancellationToken);
+            }
+            return existingBaseline;
         }
     }
 }

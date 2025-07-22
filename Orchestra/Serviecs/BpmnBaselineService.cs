@@ -86,5 +86,11 @@ namespace Orchestra.Serviecs
         {
             return await _bpmnProcessBaselineRepository.GetByBaselineIdAndVersionAsync(baselineId, version, cancellationToken);
         }
+
+        public async Task<BpmnProcessBaseline> UpdateBaselineAsync(BpmnProcessBaseline baseline, CancellationToken cancellationToken)
+        {
+            await _bpmnProcessBaselineRepository.UpdateAsync(baseline, cancellationToken);
+            return baseline;
+        }
     }
 }
