@@ -133,5 +133,20 @@ namespace Orchestra.Controllers
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpPut("{id}/update-name-description")]
+        public async Task<IActionResult> UpdateNameDescription(int id, [FromBody] UpdateNameDescriptionDto dto, CancellationToken cancellationToken)
+        {
+            var process = await _context.BpmnProcess.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            if (process == null)
+                return NotFound();
+
+            process.Name = dto.Name;
+            process.Description = dto.Description;
+            await _context.SaveChangesAsync(cancellationToken);
+            return Ok(process);
+        }
+
+
     }
 }
