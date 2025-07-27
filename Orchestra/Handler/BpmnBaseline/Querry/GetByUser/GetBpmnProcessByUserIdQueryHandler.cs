@@ -37,7 +37,8 @@ namespace Orchestra.Handler.BpmnBaseline.Querry.GetByUser
                 PoolNames = b.PoolNames,
                 CreatedBy = b.CreatedBy,
                 Version = b.Version,
-                CreatedByUserName = userFullName
+                CreatedByUserName = userFullName,
+                Description = b.Description
             }).ToList();
 
             return result;
