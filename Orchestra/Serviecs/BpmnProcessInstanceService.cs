@@ -1,4 +1,6 @@
-﻿using Orchestra.Data.Context;
+﻿using Microsoft.EntityFrameworkCore;
+using Orchestra.Data.Context;
+using Orchestra.Dtos;
 using Orchestra.Enums;
 using Orchestra.Models;
 using Orchestra.Models.Orchestra.Models;
@@ -14,17 +16,21 @@ namespace Orchestra.Services
         private readonly IBpmnProcessBaselineRepository _baselineRepository;
         private readonly IGenericRepository<BpmnProcessInstance> _genericRepository;
         private readonly IProcessStepRepository _stepRepository;
+        private readonly IUserRepository _userRepository;
         private readonly ITasksRepository _tasksRepository;
+        //private readonly ApplicationDbContext _dbContext;
 
         public BpmnProcessInstanceService(
             IBpmnProcessBaselineRepository baselineRepository,
             IGenericRepository<BpmnProcessInstance> genericRepository,
             IProcessStepRepository stepRepository,
+            IUserRepository userRepository, 
             ITasksRepository tasksRepository)
         {
             _baselineRepository = baselineRepository;
             _genericRepository = genericRepository;
             _stepRepository = stepRepository;
+            _userRepository = userRepository; 
             _tasksRepository = tasksRepository;
         }
 
@@ -64,8 +70,12 @@ namespace Orchestra.Services
             return instance;
         }
 
-        public async Task<BpmnProcessInstance> CreateInstanceAsync(BpmnProcessBaseline baseline, string? name = null, string? description = null)
+        public async Task<BpmnProcessInstance> CreateInstanceAsync(string createdByUserId, BpmnProcessBaseline baseline, CancellationToken cancellationToken, string? name = null, string? description = null)
         {
+            var user = await _userRepository.GetByIdAsync(createdByUserId, cancellationToken);
+            if (user == null)
+                throw new Exception($"Usuário com id {createdByUserId} não encontrado.");
+
             var instance = new BpmnProcessInstance
             {
                 Name = name ?? baseline.Name,
@@ -73,7 +83,8 @@ namespace Orchestra.Services
                 BpmnProcessBaselineId = baseline.Id,
                 CreatedAt = DateTime.UtcNow,
                 version = baseline.Version,
-                Description = description ?? baseline.Description
+                Description = description ?? baseline.Description,
+                CreatedBy = user
             };
             await AddAsync(instance, default);
             return instance;
@@ -154,5 +165,80 @@ namespace Orchestra.Services
 
             return tasks;
         }
+
+        public async Task<List<ProcessInstanceWithTasksDto>> GetProcessInstancesByResponsibleUserAsync(string userId, CancellationToken cancellationToken)
+        {
+            var userTasks = await _tasksRepository.GetByUserIdAsync(userId, cancellationToken);
+            if (!userTasks.Any())
+                return new List<ProcessInstanceWithTasksDto>();
+
+            var processInstanceIds = userTasks.Select(t => t.BpmnProcessId).Distinct().ToList();
+            var processInstances = new List<BpmnProcessInstance>();
+            foreach (var id in processInstanceIds)
+            {
+                var instance = await _genericRepository.GetByIdAsync(id, cancellationToken);
+                if (instance != null)
+                    processInstances.Add(instance);
+            }
+
+            // Buscar usuários criadores
+            var createdByIds = processInstances
+                .Select(pi => pi.CreatedById)
+                .Where(id => !string.IsNullOrEmpty(id))
+                .Distinct()
+                .ToList();
+
+            // Buscar todos os usuários criadores
+            var users = new List<User>();
+            foreach (var id in createdByIds)
+            {
+                var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+                if (user != null)
+                    users.Add(user);
+            }
+
+            var result = processInstances.Select(pi => {
+                var user = users.FirstOrDefault(u => u.Id == pi.CreatedById);
+                return new ProcessInstanceWithTasksDto
+                {
+                    ProcessInstanceId = pi.Id,
+                    Name = pi.Name,
+                    CreatedAt = pi.CreatedAt,
+                    BpmnProcessBaselineId = pi.BpmnProcessBaselineId,
+                    PoolNames = pi.PoolNames,
+                    version = pi.version,
+                    Status = pi.Status,
+                    ResponsibleName = user?.FullName,
+                    Tasks = userTasks
+                        .Where(t => t.BpmnProcessId == pi.Id)
+                        .Select(t => new TaskWithUserDto
+                        {
+                            TaskId = t.Id,
+                            Name = t.Name,
+                            XmlTaskId = t.XmlTaskId,
+                            Completed = t.Completed,
+                            StatusId = (int)t.Status,
+                            CreatedAt = t.CreatedAt,
+                            CompletedAt = t.CompletedAt,
+                            Comments = t.Comments,
+                            ResponsibleUser = t.ResponsibleUser == null ? null : new UserDto
+                            {
+                                Id = t.ResponsibleUser.Id,
+                                UserName = t.ResponsibleUser.UserName,
+                                Email = t.ResponsibleUser.Email,
+                                //Roles = t.ResponsibleUser.Roles
+                            }
+                        })
+                        .ToList()
+                };
+            }).ToList();
+
+            return result;
+        }
+
+        //public async Task<User?> GetUserByIdAsync(string userId, CancellationToken cancellationToken)
+        //{
+        //    return await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        //}
     }
 }

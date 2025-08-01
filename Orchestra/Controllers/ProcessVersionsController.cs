@@ -38,7 +38,7 @@ namespace Orchestra.Controllers
 
             // BaselineHistory
             var baselineHistories = await _context.BaselineHistories
-                .Where(h => h.Name == processName)
+                .Where(h => h.BpmnProcessBaselineId == baselineId)
                 .OrderBy(h => h.Version)
                 .ToListAsync();
 

@@ -41,7 +41,7 @@ namespace Orchestra.Handler.Tasks.Query.GetTaskWithUser
                         UserName = t.ResponsibleUser.UserName,
                         Email = t.ResponsibleUser.Email,
                         FullName = t.ResponsibleUser.FullName,
-                        Role = t.ResponsibleUser.Roles.FirstOrDefault() ?? ""
+                        //Roles = t.ResponsibleUser.Roles
                     }
                 })
                 .ToListAsync(cancellationToken);

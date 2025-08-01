@@ -8,11 +8,13 @@ namespace Orchestra.Handler.BpmnInstance.Command.CreateBpmnProcessInstanceFromBa
         public int BaselineId { get; set; }
         public string? Name { get; set; }
         public string? Description { get; set; }
-        public CreateBpmnProcessInstanceFromBaselineCommand(int baselineId, string? name, string? description)
+        public string UserId { get; set; } 
+        public CreateBpmnProcessInstanceFromBaselineCommand(int baselineId, string? name, string? description, string userId)
         {
             BaselineId = baselineId;
             Name = name;
             Description = description;
+            UserId = userId;
         }
     }
 }

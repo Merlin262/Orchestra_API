@@ -16,6 +16,8 @@ namespace Orchestra.Models
             public StatusEnum Status { get; set; }
             public double version { get; set; }
             public string? Description { get; set; }
+            public string CreatedById { get; set; }
+            public User CreatedBy { get; set; }
         }
     }
 }

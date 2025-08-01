@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Orchestra.Data.Context;
 
@@ -11,9 +12,11 @@ using Orchestra.Data.Context;
 namespace Orchestra.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250728022034_AddCreatedByToInstance")]
+    partial class AddCreatedByToInstance
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -143,7 +146,6 @@ namespace Orchestra.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("CreatedById")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Description")
@@ -204,20 +206,6 @@ namespace Orchestra.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ProcessStep");
-                });
-
-            modelBuilder.Entity("Orchestra.Models.Role", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Roles");
                 });
 
             modelBuilder.Entity("Orchestra.Models.Tasks", b =>
@@ -300,6 +288,10 @@ namespace Orchestra.Migrations
                     b.Property<int>("ProfileType")
                         .HasColumnType("int");
 
+                    b.Property<string>("Roles")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("UserName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -307,21 +299,6 @@ namespace Orchestra.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("RoleUser", b =>
-                {
-                    b.Property<string>("RolesId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UsersId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("RolesId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("RoleUser");
                 });
 
             modelBuilder.Entity("Orchestra.Models.BaselineHistory", b =>
@@ -354,9 +331,7 @@ namespace Orchestra.Migrations
 
                     b.HasOne("Orchestra.Models.User", "CreatedBy")
                         .WithMany()
-                        .HasForeignKey("CreatedById")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("CreatedById");
 
                     b.Navigation("BpmnProcessBaseline");
 
@@ -386,21 +361,6 @@ namespace Orchestra.Migrations
                     b.Navigation("ProcessStep");
 
                     b.Navigation("ResponsibleUser");
-                });
-
-            modelBuilder.Entity("RoleUser", b =>
-                {
-                    b.HasOne("Orchestra.Models.Role", null)
-                        .WithMany()
-                        .HasForeignKey("RolesId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Orchestra.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("Orchestra.Models.User", b =>

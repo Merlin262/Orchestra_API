@@ -11,6 +11,7 @@ using Orchestra.Handler.BpmnInstance.Command.CreateBpmnProcessInstanceCommand;
 using Orchestra.Handler.BpmnInstance.Command.CreateBpmnProcessInstanceFromBaselineCommand;
 using Orchestra.Handler.BpmnInstance.Command.DeleteInstance;
 using Orchestra.Handler.BpmnInstance.Command.UpdateInstance;
+using Orchestra.Handler.BpmnInstance.Query;
 using Orchestra.Handler.BpmnInstance.Query.GetById;
 using Orchestra.Handler.BpmnInstance.Query.GetProcessInstance;
 using Orchestra.Handler.BpmnInstance.Query.GetTasksForProcessInstance;
@@ -18,16 +19,18 @@ using Orchestra.Handler.Tasks.Querry.GetTaskWithUser;
 using Orchestra.Hubs;
 using Orchestra.Models;
 using Orchestra.Models.Orchestra.Models;
+using Orchestra.Repoitories.Interfaces;
 using Orchestra.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace Orchestra.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class BpmnInstancesController : ControllerBase
@@ -35,16 +38,21 @@ namespace Orchestra.Controllers
         private readonly IMediator _mediator;
         private readonly IHubContext<TasksHub> _hubContext;
         private readonly ILogger<BpmnInstancesController> _logger;
+        private readonly ApplicationDbContext _context;
+        private readonly IUserRepository _userRepository;
 
         public BpmnInstancesController(
             ApplicationDbContext context,
             IMediator mediator,
             IHubContext<TasksHub> hubContext,
-            ILogger<BpmnInstancesController> logger)
+            ILogger<BpmnInstancesController> logger, 
+            IUserRepository userRepository)
         {
             _mediator = mediator;
             _hubContext = hubContext;
             _logger = logger;
+            _context = context;
+            _userRepository = userRepository;
         }
 
         // GET: api/BpmnProcessInstances
@@ -102,8 +110,9 @@ namespace Orchestra.Controllers
         {
             try
             {
-                var command = new CreateBpmnProcessInstanceFromBaselineCommand(dto.BaselineId, dto.Name, dto.Description);
+                var command = new CreateBpmnProcessInstanceFromBaselineCommand(dto.BaselineId, dto.Name, dto.Description, dto.UserId);
                 var instance = await _mediator.Send(command);
+                //instance.CreatedBy = user;
                 return CreatedAtAction(nameof(GetBpmnProcessInstance), new { id = instance.Id }, instance);
             }
             catch (Exception ex)
@@ -143,6 +152,16 @@ namespace Orchestra.Controllers
             if (updated == null)
                 return NotFound();
             return Ok(updated);
+        }
+
+        // GET: api/BpmnProcessInstances/by-responsible/{userId}
+        [HttpGet("by-responsible/{userId}")]
+        public async Task<ActionResult<IEnumerable<ProcessInstanceWithTasksDto>>> GetProcessInstancesByResponsibleUser(string userId)
+        {
+            var result = await _mediator.Send(new GetProcessInstancesByResponsibleUserQuery(userId));
+            if (result == null || !result.Any())
+                return NotFound();
+            return Ok(result);
         }
     }
 }

@@ -21,14 +21,10 @@ namespace Orchestra.Handler.BpmnBaseline.Querry.GetByUser
                 .Where(b => b.CreatedBy == request.UserId)
                 .ToListAsync(cancellationToken);
 
-            var latestBaselines = baselines
-                .GroupBy(b => b.Name)
-                .Select(g => g.OrderByDescending(x => x.Version).First())
-                .ToList();
 
             var userFullName = await GetUserFullNameByIdAsync(request.UserId, cancellationToken);
 
-            var result = latestBaselines.Select(b => new BpmnProcessBaselineWithUserDto
+            var result = baselines.Select(b => new BpmnProcessBaselineWithUserDto
             {
                 Id = b.Id,
                 Name = b.Name,

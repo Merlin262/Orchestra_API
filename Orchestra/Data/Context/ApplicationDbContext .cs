@@ -13,17 +13,16 @@ namespace Orchestra.Data.Context
         public DbSet<User> Users => Set<User>();
         public DbSet<Tasks> Tasks => Set<Tasks>();
         public DbSet<BaselineHistory> BaselineHistories => Set<BaselineHistory>();
+        public DbSet<Role> Roles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<User>()
-                .Property(u => u.Roles)
-                .HasConversion(
-                    roles => string.Join(',', roles),
-                    value => value.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
-                );
-
             base.OnModelCreating(modelBuilder);
+
+            // Configuração da relação muitos-para-muitos User <-> Role
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Roles)
+                .WithMany(r => r.Users);
         }
 
     }

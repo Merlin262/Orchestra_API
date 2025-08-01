@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Orchestra.Data.Context;
+using Orchestra.Dtos;
+using Orchestra.Enums;
 using Orchestra.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -49,11 +51,13 @@ namespace Orchestra.Controllers
         [HttpGet("Roles")]
         public async Task<ActionResult<IEnumerable<object>>> GetRolesCount()
         {
-            var users = await _context.Users.ToListAsync();
+            var users = await _context.Users
+                .Include(u => u.Roles)
+                .ToListAsync();
 
             var rolesCount = users
-                .SelectMany(u => u.Roles ?? new List<string>())
-                .GroupBy(role => role)
+                .SelectMany(u => u.Roles ?? new List<Role>())
+                .GroupBy(role => role.Name)
                 .Select(g => new
                 {
                     Role = g.Key,
@@ -91,12 +95,19 @@ namespace Orchestra.Controllers
 
         // PUT: api/Users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(string id, User user)
+        public async Task<IActionResult> PutUser(string id, UpdateUserDto dto)
         {
-            if (id != user.Id)
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
             {
-                return BadRequest();
+                return NotFound();
             }
+
+            user.FullName = dto.FullName;
+            user.Email = dto.Email;
+            user.ProfileType = dto.ProfileType;
+            user.IsActive = dto.IsActive;
+            //user.Roles = dto.Roles;
 
             _context.Entry(user).State = EntityState.Modified;
 
@@ -135,17 +146,7 @@ namespace Orchestra.Controllers
             return NoContent();
         }
 
-        //[HttpGet("ByGroups")]
-        //public async Task<ActionResult<IEnumerable<User>>> GetUsersByGroupNames([FromQuery] List<string> groupNames)
-        //{
-        //    if (groupNames == null || !groupNames.Any())
-        //        return BadRequest("A lista de nomes de grupos não pode ser vazia.");
+        
 
-        //    var users = await _context.Users
-        //        .Where(u => u.UserGroup != null && groupNames.Contains(u.UserGroup.Name))
-        //        .ToListAsync();
-
-        //    return Ok(users);
-        //}
     }
 }
