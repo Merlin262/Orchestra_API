@@ -72,10 +72,10 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UpdateBpmnProcessBaselineComman
                     XmlContent = existingBaseline.XmlContent,
                     Description = existingBaseline.Description,
                     Version = existingBaseline.Version,
-                    ChangedBy = existingBaseline.CreatedBy,
+                    ChangedBy = existingBaseline.CreatedByUserId,
                     ChangedAt = existingBaseline.CreatedAt,
                     ChangeType = "Edit",
-                    Responsible = existingBaseline.CreatedBy
+                    Responsible = existingBaseline.CreatedByUserId
                 };
                 context.BaselineHistories.Add(history);
                 await context.SaveChangesAsync(cancellationToken);

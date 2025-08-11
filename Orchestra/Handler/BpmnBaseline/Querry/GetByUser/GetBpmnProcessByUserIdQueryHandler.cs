@@ -18,7 +18,7 @@ namespace Orchestra.Handler.BpmnBaseline.Querry.GetByUser
         public async Task<List<BpmnProcessBaselineWithUserDto>> Handle(GetProcessBaselineByUser request, CancellationToken cancellationToken)
         {
             var baselines = await _context.BpmnProcess
-                .Where(b => b.CreatedBy == request.UserId)
+                .Where(b => b.CreatedByUserId == request.UserId)
                 .ToListAsync(cancellationToken);
 
 
@@ -31,7 +31,7 @@ namespace Orchestra.Handler.BpmnBaseline.Querry.GetByUser
                 XmlContent = b.XmlContent,
                 CreatedAt = b.CreatedAt,
                 PoolNames = b.PoolNames,
-                CreatedBy = b.CreatedBy,
+                CreatedBy = b.CreatedByUserId,
                 Version = b.Version,
                 CreatedByUserName = userFullName,
                 Description = b.Description

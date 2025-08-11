@@ -31,18 +31,19 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
             // Corrige os dataObject para dataObjectReference
             xmlContent = _bpmnBaselineService.FixDataObjectToDataObjectReference(xmlContent);
 
-            string? processName = ExtractProcessNameFromXml(xmlContent);
+            //string? processName = ExtractProcessNameFromXml(xmlContent);
 
             var poolNames = _bpmnBaselineService.ExtractPoolNames(xmlContent);
 
             var process = new BpmnProcessBaseline
             {
-                Name = processName,
+                Name = request.Name,
                 XmlContent = xmlContent,
                 CreatedAt = DateTime.UtcNow,
                 PoolNames = poolNames,
-                CreatedBy = request.UserId,
+                CreatedByUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken),
                 Version = 1.0,
+                Description = request.Description,
                 IsActive = true
             };
 
@@ -57,10 +58,10 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
                 XmlContent = process.XmlContent,
                 Description = process.Description,
                 Version = process.Version,
-                ChangedBy = process.CreatedBy,
+                ChangedBy = process.CreatedByUserId, // FK do usuário
                 ChangedAt = process.CreatedAt,
                 ChangeType = "Upload",
-                Responsible = process.CreatedBy // Pega o CreatedBy do BpmnProcessBaseline
+                Responsible = process.CreatedByUserId // FK do usuário
             };
             _context.BaselineHistories.Add(history);
             await _context.SaveChangesAsync(cancellationToken);
@@ -70,20 +71,6 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
             return process;
         }
 
-        private string? ExtractProcessNameFromXml(string xmlContent)
-        {
-            try
-            {
-                var xDoc = XDocument.Parse(xmlContent);
-                XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
-                var processElement = xDoc.Descendants(bpmn + "process").LastOrDefault();
-                return processElement?.Attribute("name")?.Value;
-            }
-            catch
-            {
-                return null;
-            }
-        }
 
         public async Task ParseAndSaveSteps(string xmlContent, int bpmnProcessId, CancellationToken cancellationToken)
         {

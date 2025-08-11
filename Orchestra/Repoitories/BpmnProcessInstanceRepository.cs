@@ -26,6 +26,13 @@ namespace Orchestra.Repoitories
                 .Where(pi => ids.Contains(pi.Id))
                 .ToListAsync(cancellationToken);
         }
+
+        public async Task<IEnumerable<BpmnProcessInstance>> GetAllWithUserAsync(CancellationToken cancellationToken = default)
+        {
+            return await _context.bpmnProcessInstances
+                .Include(x => x.CreatedBy)
+                .ToListAsync(cancellationToken);
+        }
     }
 
 }

@@ -16,7 +16,7 @@ using System.Xml.Linq;
 
 namespace Orchestra.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class BpmnController : ControllerBase
@@ -41,7 +41,9 @@ namespace Orchestra.Controllers
             var command = new BpmnProcessCommand
             {
                 UserId = request.UserId,
-                File = request.File
+                File = request.File,
+                Name = request.Name,
+                Description = request.Description
             };
 
             var result = await _mediator.Send(command, cancellationToken);
@@ -117,8 +119,7 @@ namespace Orchestra.Controllers
                 Id = id,
                 File = request.File,
                 Name = request.Name,
-                Description = request.Description,
-                //Version = request.Version
+                Description = request.Description
             };
 
             try

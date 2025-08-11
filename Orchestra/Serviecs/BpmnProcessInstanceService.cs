@@ -15,22 +15,24 @@ namespace Orchestra.Services
     {
         private readonly IBpmnProcessBaselineRepository _baselineRepository;
         private readonly IGenericRepository<BpmnProcessInstance> _genericRepository;
+        private readonly IBpmnProcessInstanceRepository _instanceRepository;
         private readonly IProcessStepRepository _stepRepository;
         private readonly IUserRepository _userRepository;
         private readonly ITasksRepository _tasksRepository;
-        //private readonly ApplicationDbContext _dbContext;
 
         public BpmnProcessInstanceService(
             IBpmnProcessBaselineRepository baselineRepository,
             IGenericRepository<BpmnProcessInstance> genericRepository,
+            IBpmnProcessInstanceRepository instanceRepository,
             IProcessStepRepository stepRepository,
-            IUserRepository userRepository, 
+            IUserRepository userRepository,
             ITasksRepository tasksRepository)
         {
             _baselineRepository = baselineRepository;
             _genericRepository = genericRepository;
+            _instanceRepository = instanceRepository;
             _stepRepository = stepRepository;
-            _userRepository = userRepository; 
+            _userRepository = userRepository;
             _tasksRepository = tasksRepository;
         }
 
@@ -240,5 +242,10 @@ namespace Orchestra.Services
         //{
         //    return await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         //}
+
+        public async Task<IEnumerable<BpmnProcessInstance>> GetAllWithUserAsync(CancellationToken cancellationToken)
+        {
+            return await _instanceRepository.GetAllWithUserAsync(cancellationToken);
+        }
     }
 }

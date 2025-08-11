@@ -76,7 +76,7 @@ namespace Orchestra.Controllers
                 ActiveInstances = activeInstances.Select(i => new {
                     Version = i.version,
                     Name = i.Name,
-                    Responsible = i.BpmnProcessBaseline.CreatedBy != null ? _context.Users.FirstOrDefault(u => u.Id == i.BpmnProcessBaseline.CreatedBy)?.FullName : null,
+                    Responsible = i.BpmnProcessBaseline.CreatedByUser != null ? i.BpmnProcessBaseline.CreatedByUser.FullName : null,
                     CreatedAt = i.CreatedAt,
                     Status = i.Status.ToString(),
                     Progress = GetInstanceProgress(i)
@@ -97,7 +97,7 @@ namespace Orchestra.Controllers
         {
             // Exemplo: calcular progresso baseado em tasks
             var totalTasks = _context.Tasks.Count(t => t.BpmnProcessId == instance.Id);
-            var completedTasks = _context.Tasks.Count(t => t.BpmnProcessId == instance.Id && t.Completed);
+            var completedTasks = _context.Tasks.Count(t => t.BpmnProcessId == instance.Id && t.Status == StatusEnum.Finished);
             return new { Completed = completedTasks, Total = totalTasks };
         }
     }

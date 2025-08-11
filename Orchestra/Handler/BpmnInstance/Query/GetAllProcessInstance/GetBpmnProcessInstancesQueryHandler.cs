@@ -20,7 +20,7 @@ namespace Orchestra.Handler.BpmnInstance.Query.GetProcessInstance
 
         public async Task<IEnumerable<GetBpmnProcessInstancesQueryResult>> Handle(GetBpmnProcessInstancesQuery request, CancellationToken cancellationToken)
         {
-            var instances = await _service.GetAllAsync(cancellationToken);
+            var instances = await _service.GetAllWithUserAsync(cancellationToken);
 
             var results = instances.Select(instance => new GetBpmnProcessInstancesQueryResult
             {
@@ -30,7 +30,8 @@ namespace Orchestra.Handler.BpmnInstance.Query.GetProcessInstance
                 CreatedAt = instance.CreatedAt,
                 BpmnProcessBaselineId = instance.BpmnProcessBaselineId,
                 Version = instance.version,
-                Description = instance.Description
+                Description = instance.Description,
+                CreatedBy = instance.CreatedBy.FullName
             });
 
             return results;

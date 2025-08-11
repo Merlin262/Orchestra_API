@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Orchestra.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
@@ -32,6 +32,7 @@ namespace Orchestra.Controllers
 
             var totalUsers = await _context.Users.CountAsync();
             var users = await _context.Users
+                .Include(u => u.Roles)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -41,7 +42,15 @@ namespace Orchestra.Controllers
                 TotalItems = totalUsers,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Items = users
+                Items = users.Select(u => new {
+                    u.Id,
+                    u.UserName,
+                    u.Email,
+                    u.FullName,
+                    u.IsActive,
+                    u.ProfileType,
+                    Roles = u.Roles?.Select(r => r.Name).ToList() ?? new List<string>()
+                })
             };
 
             return Ok(result);
@@ -51,17 +60,15 @@ namespace Orchestra.Controllers
         [HttpGet("Roles")]
         public async Task<ActionResult<IEnumerable<object>>> GetRolesCount()
         {
-            var users = await _context.Users
-                .Include(u => u.Roles)
+            var roles = await _context.Roles
+                .Include(r => r.Users)
                 .ToListAsync();
 
-            var rolesCount = users
-                .SelectMany(u => u.Roles ?? new List<Role>())
-                .GroupBy(role => role.Name)
-                .Select(g => new
+            var rolesCount = roles
+                .Select(r => new
                 {
-                    Role = g.Key,
-                    Count = g.Count()
+                    Role = r.Name,
+                    Count = r.Users?.Count ?? 0
                 })
                 .OrderByDescending(r => r.Count)
                 .ToList();
@@ -97,7 +104,9 @@ namespace Orchestra.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(string id, UpdateUserDto dto)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Id == id);
             if (user == null)
             {
                 return NotFound();
@@ -107,7 +116,18 @@ namespace Orchestra.Controllers
             user.Email = dto.Email;
             user.ProfileType = dto.ProfileType;
             user.IsActive = dto.IsActive;
-            //user.Roles = dto.Roles;
+
+            if (dto.Roles != null)
+            {
+                var roles = await _context.Roles
+                    .Where(r => dto.Roles.Contains(r.Id) || dto.Roles.Contains(r.Name))
+                    .ToListAsync();
+                user.Roles = roles;
+            }
+            else
+            {
+                user.Roles = new List<Role>(); 
+            }
 
             _context.Entry(user).State = EntityState.Modified;
 
