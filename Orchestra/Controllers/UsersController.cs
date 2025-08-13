@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Orchestra.Data.Context;
+using Orchestra.Dtos;
+using Orchestra.Enums;
 using Orchestra.Models;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Orchestra.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class UsersController : ControllerBase
@@ -30,6 +32,7 @@ namespace Orchestra.Controllers
 
             var totalUsers = await _context.Users.CountAsync();
             var users = await _context.Users
+                .Include(u => u.Roles)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -39,7 +42,15 @@ namespace Orchestra.Controllers
                 TotalItems = totalUsers,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
-                Items = users
+                Items = users.Select(u => new {
+                    u.Id,
+                    u.UserName,
+                    u.Email,
+                    u.FullName,
+                    u.IsActive,
+                    u.ProfileType,
+                    Roles = u.Roles?.Select(r => r.Name).ToList() ?? new List<string>()
+                })
             };
 
             return Ok(result);
@@ -49,15 +60,15 @@ namespace Orchestra.Controllers
         [HttpGet("Roles")]
         public async Task<ActionResult<IEnumerable<object>>> GetRolesCount()
         {
-            var users = await _context.Users.ToListAsync();
+            var roles = await _context.Roles
+                .Include(r => r.Users)
+                .ToListAsync();
 
-            var rolesCount = users
-                .SelectMany(u => u.Roles ?? new List<string>())
-                .GroupBy(role => role)
-                .Select(g => new
+            var rolesCount = roles
+                .Select(r => new
                 {
-                    Role = g.Key,
-                    Count = g.Count()
+                    Role = r.Name,
+                    Count = r.Users?.Count ?? 0
                 })
                 .OrderByDescending(r => r.Count)
                 .ToList();
@@ -91,11 +102,31 @@ namespace Orchestra.Controllers
 
         // PUT: api/Users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(string id, User user)
+        public async Task<IActionResult> PutUser(string id, UpdateUserDto dto)
         {
-            if (id != user.Id)
+            var user = await _context.Users
+                .Include(u => u.Roles)
+                .FirstOrDefaultAsync(u => u.Id == id);
+            if (user == null)
             {
-                return BadRequest();
+                return NotFound();
+            }
+
+            user.FullName = dto.FullName;
+            user.Email = dto.Email;
+            user.ProfileType = dto.ProfileType;
+            user.IsActive = dto.IsActive;
+
+            if (dto.Roles != null)
+            {
+                var roles = await _context.Roles
+                    .Where(r => dto.Roles.Contains(r.Id) || dto.Roles.Contains(r.Name))
+                    .ToListAsync();
+                user.Roles = roles;
+            }
+            else
+            {
+                user.Roles = new List<Role>(); 
             }
 
             _context.Entry(user).State = EntityState.Modified;
@@ -135,17 +166,7 @@ namespace Orchestra.Controllers
             return NoContent();
         }
 
-        //[HttpGet("ByGroups")]
-        //public async Task<ActionResult<IEnumerable<User>>> GetUsersByGroupNames([FromQuery] List<string> groupNames)
-        //{
-        //    if (groupNames == null || !groupNames.Any())
-        //        return BadRequest("A lista de nomes de grupos não pode ser vazia.");
+        
 
-        //    var users = await _context.Users
-        //        .Where(u => u.UserGroup != null && groupNames.Contains(u.UserGroup.Name))
-        //        .ToListAsync();
-
-        //    return Ok(users);
-        //}
     }
 }

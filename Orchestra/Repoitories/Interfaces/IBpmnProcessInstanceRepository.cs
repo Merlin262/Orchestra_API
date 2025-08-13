@@ -6,6 +6,6 @@ namespace Orchestra.Repoitories.Interfaces
     {
         Task<BpmnProcessInstance> AddAsync(BpmnProcessInstance instance, CancellationToken cancellationToken = default);
         Task<List<BpmnProcessInstance>> GetByIdsAsync(List<int> ids, CancellationToken cancellationToken = default);
-
+        Task<IEnumerable<BpmnProcessInstance>> GetAllWithUserAsync(CancellationToken cancellationToken = default);
     }
 }

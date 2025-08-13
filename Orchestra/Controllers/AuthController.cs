@@ -41,7 +41,7 @@ namespace Orchestra.Controllers
                 Email = dto.Email,
                 FullName = dto.FullName,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-                Roles = new List<string> { "User" },
+                Roles = null,
                 ProfileType = dto.ProfileType
             };
 

@@ -75,5 +75,22 @@ namespace Orchestra.Serviecs
         {
             await _bpmnProcessBaselineRepository.DeleteAsync(baseline, cancellationToken);
         }
+
+        public async Task<BpmnProcessBaseline> AddBaselineAsync(BpmnProcessBaseline baseline, CancellationToken cancellationToken)
+        {
+            await _bpmnProcessBaselineRepository.AddAsync(baseline, cancellationToken);
+            return baseline;
+        }
+
+        public async Task<BpmnProcessBaseline?> GetByBaselineIdAndVersionAsync(int baselineId, double version, CancellationToken cancellationToken)
+        {
+            return await _bpmnProcessBaselineRepository.GetByBaselineIdAndVersionAsync(baselineId, version, cancellationToken);
+        }
+
+        public async Task<BpmnProcessBaseline> UpdateBaselineAsync(BpmnProcessBaseline baseline, CancellationToken cancellationToken)
+        {
+            await _bpmnProcessBaselineRepository.UpdateAsync(baseline, cancellationToken);
+            return baseline;
+        }
     }
 }

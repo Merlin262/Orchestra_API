@@ -7,14 +7,16 @@ using Orchestra.Data.Context;
 using Orchestra.Dtos;
 using Orchestra.Handler;
 using Orchestra.Handler.BpmnBaseline.Command.DeleteBpmnProcessBaselineCommand;
+using Orchestra.Handler.BpmnBaseline.Command.UpdateBpmnProcessBaselineCommand;
 using Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand;
 using Orchestra.Handler.BpmnBaseline.Querry.GetAll;
 using Orchestra.Handler.BpmnBaseline.Querry.GetById;
+using Orchestra.Models;
 using System.Xml.Linq;
 
 namespace Orchestra.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class BpmnController : ControllerBase
@@ -39,7 +41,9 @@ namespace Orchestra.Controllers
             var command = new BpmnProcessCommand
             {
                 UserId = request.UserId,
-                File = request.File
+                File = request.File,
+                Name = request.Name,
+                Description = request.Description
             };
 
             var result = await _mediator.Send(command, cancellationToken);
@@ -102,5 +106,48 @@ namespace Orchestra.Controllers
 
             return Ok(baselines);
         }
+
+        [HttpPut("{id}/update-baseline")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UpdateBaselineWithNewBpmn(int id, [FromForm] UpdateBaselineWithNewBpmnRequest request, CancellationToken cancellationToken)
+        {
+            if (request.File == null || request.File.Length == 0)
+                return BadRequest("Arquivo inválido.");
+
+            var command = new UpdateBpmnProcessBaselineCommand
+            {
+                Id = id,
+                File = request.File,
+                Name = request.Name,
+                Description = request.Description
+            };
+
+            try
+            {
+                var result = await _mediator.Send(command, cancellationToken);
+                if (result == null)
+                    return NotFound();
+                return Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpPut("{id}/update-name-description")]
+        public async Task<IActionResult> UpdateNameDescription(int id, [FromBody] UpdateNameDescriptionDto dto, CancellationToken cancellationToken)
+        {
+            var process = await _context.BpmnProcess.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+            if (process == null)
+                return NotFound();
+
+            process.Name = dto.Name;
+            process.Description = dto.Description;
+            await _context.SaveChangesAsync(cancellationToken);
+            return Ok(process);
+        }
+
+
     }
 }

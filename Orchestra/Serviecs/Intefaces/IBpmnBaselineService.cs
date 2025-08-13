@@ -1,4 +1,6 @@
 ﻿using Orchestra.Models;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Orchestra.Serviecs.Intefaces
 {
@@ -9,5 +11,8 @@ namespace Orchestra.Serviecs.Intefaces
         Task<bool> HasRelatedInstancesAsync(int baselineId, CancellationToken cancellationToken);
         Task<BpmnProcessBaseline?> GetByIdAsync(int id, CancellationToken cancellationToken);
         Task DeleteAsync(BpmnProcessBaseline baseline, CancellationToken cancellationToken);
+        Task<BpmnProcessBaseline> AddBaselineAsync(BpmnProcessBaseline baseline, CancellationToken cancellationToken);
+        Task<BpmnProcessBaseline?> GetByBaselineIdAndVersionAsync(int baselineId, double version, CancellationToken cancellationToken);
+        Task<BpmnProcessBaseline> UpdateBaselineAsync(BpmnProcessBaseline baseline, CancellationToken cancellationToken);
     }
 }

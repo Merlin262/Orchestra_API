@@ -7,8 +7,10 @@
         public string? XmlContent { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public List<string> PoolNames { get; set; } = new();
-        public string? CreatedBy { get; set; }
+        public string? CreatedByUserId { get; set; }
         public User? CreatedByUser { get; set; }
         public double Version { get; set; }
+        public string? Description { get; set; }
+        public bool IsActive { get; set; }
     }
 }

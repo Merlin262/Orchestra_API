@@ -1,4 +1,6 @@
-﻿namespace Orchestra.Dtos
+﻿using Orchestra.Enums;
+
+namespace Orchestra.Dtos
 {
     public class ProcessInstanceWithTasksDto
     {
@@ -10,5 +12,7 @@
         public List<string> PoolNames { get; set; }
         public List<TaskWithUserDto> Tasks { get; set; }
         public double? version { get; set; }
+        public StatusEnum Status { get; set; }
+        public string? ResponsibleName { get; set; }
     }
 }

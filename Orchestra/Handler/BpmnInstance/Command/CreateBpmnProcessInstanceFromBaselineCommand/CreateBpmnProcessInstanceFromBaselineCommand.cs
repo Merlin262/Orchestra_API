@@ -6,9 +6,15 @@ namespace Orchestra.Handler.BpmnInstance.Command.CreateBpmnProcessInstanceFromBa
     public class CreateBpmnProcessInstanceFromBaselineCommand : IRequest<BpmnProcessInstance>
     {
         public int BaselineId { get; set; }
-        public CreateBpmnProcessInstanceFromBaselineCommand(int baselineId)
+        public string? Name { get; set; }
+        public string? Description { get; set; }
+        public string UserId { get; set; } 
+        public CreateBpmnProcessInstanceFromBaselineCommand(int baselineId, string? name, string? description, string userId)
         {
             BaselineId = baselineId;
+            Name = name;
+            Description = description;
+            UserId = userId;
         }
     }
 }

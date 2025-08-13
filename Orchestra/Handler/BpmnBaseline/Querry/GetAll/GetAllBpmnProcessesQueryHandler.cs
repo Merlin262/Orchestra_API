@@ -1,4 +1,5 @@
-﻿using MediatR;
+﻿using System.Linq;
+using MediatR;
 using Orchestra.Models;
 using Orchestra.Repoitories.Interfaces;
 
@@ -15,9 +16,12 @@ namespace Orchestra.Handler.BpmnBaseline.Querry.GetAll
 
         public async Task<IEnumerable<BpmnProcessBaseline>> Handle(GetAllBpmnProcessesQuery request, CancellationToken cancellationToken)
         {
-            // Busque os processos do repositório
             var processes = await _repository.GetAllAsync(cancellationToken);
-            return processes;
+            var latestBaselines = processes
+                .GroupBy(p => p.Name)
+                .Select(g => g.OrderByDescending(x => x.Version).First())
+                .ToList();
+            return latestBaselines;
         }
     }
 }
