@@ -62,11 +62,12 @@ namespace Orchestra.Controllers
         {
             var roles = await _context.Roles
                 .Include(r => r.Users)
-                .ToListAsync();
+                .ToListAsync(); 
 
             var rolesCount = roles
                 .Select(r => new
                 {
+                    Id = r.Id,
                     Role = r.Name,
                     Count = r.Users?.Count ?? 0
                 })
@@ -114,7 +115,7 @@ namespace Orchestra.Controllers
 
             user.FullName = dto.FullName;
             user.Email = dto.Email;
-            user.ProfileType = dto.ProfileType;
+            user.ProfileType = dto.ProfileType?.ToList() ?? new List<ProfileTypeEnum>();
             user.IsActive = dto.IsActive;
 
             if (dto.Roles != null)
@@ -165,8 +166,5 @@ namespace Orchestra.Controllers
 
             return NoContent();
         }
-
-        
-
     }
 }

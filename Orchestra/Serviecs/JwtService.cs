@@ -18,13 +18,12 @@ namespace Orchestra.Serviecs
         public string GenerateToken(User user)
         {
             var claims = new List<Claim>
-    {
-        new Claim(ClaimTypes.NameIdentifier, user.Id),
-        new Claim(ClaimTypes.Name, user.UserName),
-        new Claim(ClaimTypes.Email, user.Email),
-        new Claim("FullName", user.FullName),
-        new Claim("ProfileType", user.ProfileType.ToString()),
-    };
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id),
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim("FullName", user.FullName),
+            };
 
             if (user.Roles != null)
             {
@@ -32,6 +31,14 @@ namespace Orchestra.Serviecs
                 {
                     if (!string.IsNullOrWhiteSpace(role?.Name))
                         claims.Add(new Claim(ClaimTypes.Role, role.Name));
+                }
+            }
+
+            if (user.ProfileType != null)
+            {
+                foreach (var profile in user.ProfileType)
+                {
+                    claims.Add(new Claim("ProfileType", profile.ToString()));
                 }
             }
 

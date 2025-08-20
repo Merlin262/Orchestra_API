@@ -45,7 +45,7 @@ namespace Orchestra.Controllers
         [HttpPost]
         public async Task<ActionResult<RoleDto>> CreateRole(CreateRoleDto dto)
         {
-            var role = new Role { Id = Guid.NewGuid().ToString(), Name = dto.Name };
+            var role = new Role { Id = Guid.NewGuid().ToString(), Name = dto.role };
             _context.Roles.Add(role);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetRole), new { id = role.Id }, new RoleDto { Id = role.Id, Name = role.Name });
@@ -58,7 +58,7 @@ namespace Orchestra.Controllers
             var role = await _context.Roles.FindAsync(id);
             if (role == null)
                 return NotFound();
-            role.Name = dto.Name;
+            role.Name = dto.role;
             _context.Entry(role).State = EntityState.Modified;
             await _context.SaveChangesAsync();
             return NoContent();
@@ -84,10 +84,10 @@ namespace Orchestra.Controllers
     }
     public class CreateRoleDto
     {
-        public string Name { get; set; }
+        public string role { get; set; }
     }
     public class UpdateRoleDto
     {
-        public string Name { get; set; }
+        public string role { get; set; }
     }
 }

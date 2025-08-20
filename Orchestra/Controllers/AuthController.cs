@@ -10,6 +10,7 @@ using Orchestra.Serviecs;
 using Microsoft.AspNetCore.Authorization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Orchestra.Enums;
 
 
 namespace Orchestra.Controllers
@@ -42,7 +43,7 @@ namespace Orchestra.Controllers
                 FullName = dto.FullName,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Roles = null,
-                ProfileType = dto.ProfileType
+                ProfileType = new List<ProfileTypeEnum> { ProfileTypeEnum.Employee }
             };
 
             _context.Users.Add(user);
