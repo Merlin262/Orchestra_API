@@ -132,7 +132,7 @@ namespace Orchestra.Services
             var xDoc = XDocument.Parse(xmlContent ?? "");
             XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
             var tasks = new List<Tasks>();
-            var taskElements = xDoc.Descendants(bpmn + "task");
+            var taskElements = xDoc.Descendants(bpmn + "task").Concat(xDoc.Descendants(bpmn + "userTask"));
             foreach (var element in taskElements)
             {
                 var bpmnId = element.Attribute("id")?.Value;

@@ -35,6 +35,8 @@ namespace Orchestra.Controllers
             if (existing)
                 return BadRequest("Usuário já existente.");
 
+            bool isFirstUser = !await _context.Users.AnyAsync();
+
             var user = new User
             {
                 Id = Guid.NewGuid().ToString(),
@@ -43,7 +45,9 @@ namespace Orchestra.Controllers
                 FullName = dto.FullName,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Roles = null,
-                ProfileType = new List<ProfileTypeEnum> { ProfileTypeEnum.Employee }
+                ProfileType = isFirstUser 
+                    ? new List<ProfileTypeEnum> { ProfileTypeEnum.ADM } 
+                    : new List<ProfileTypeEnum> { ProfileTypeEnum.Employee }
             };
 
             _context.Users.Add(user);

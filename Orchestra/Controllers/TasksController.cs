@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using MediatR;
@@ -15,7 +16,7 @@ using Orchestra.Hubs;
 
 namespace Orchestra.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class TasksController : ControllerBase
@@ -196,6 +197,34 @@ namespace Orchestra.Controllers
                 return NotFound("Task não encontrada ou nenhum usuário atribuído.");
 
             return NoContent();
+        }
+
+        [HttpPost("{taskId}/upload-file")]
+        [RequestSizeLimit(104857600)] // 100MB
+        public async Task<IActionResult> UploadFileToTask([FromRoute] Guid taskId, [FromForm] UploadTaskFileDto dto)
+        {
+            var file = dto.File;
+            if (file == null || file.Length == 0)
+                return BadRequest("Arquivo inválido.");
+
+            var task = await _context.Tasks.FindAsync(taskId);
+            if (task == null)
+                return NotFound("Task não encontrada.");
+
+            using var ms = new MemoryStream();
+            await file.CopyToAsync(ms);
+            var fileEntity = new Models.TaskFile
+            {
+                Id = Guid.NewGuid(),
+                TaskId = taskId,
+                FileName = file.FileName,
+                ContentType = file.ContentType,
+                Content = ms.ToArray(),
+                UploadedAt = DateTime.UtcNow
+            };
+            _context.TaskFiles.Add(fileEntity);
+            await _context.SaveChangesAsync();
+            return Ok(new { fileEntity.Id, fileEntity.FileName });
         }
 
 

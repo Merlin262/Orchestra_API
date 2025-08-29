@@ -14,6 +14,7 @@ namespace Orchestra.Data.Context
         public DbSet<Tasks> Tasks => Set<Tasks>();
         public DbSet<BaselineHistory> BaselineHistories => Set<BaselineHistory>();
         public DbSet<Role> Roles { get; set; }
+        public DbSet<TaskFile> TaskFiles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
