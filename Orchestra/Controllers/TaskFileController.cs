@@ -22,16 +22,28 @@ namespace Orchestra.Controllers
 
         // GET: api/TaskFile/by-task/{taskId}
         [HttpGet("by-task/{taskId}")]
-        public async Task<ActionResult<IEnumerable<TaskFile>>> GetFilesByTaskId([FromRoute] Guid taskId)
+        public async Task<ActionResult<IEnumerable<object>>> GetFilesByTaskId([FromRoute] Guid taskId)
         {
             var files = await _context.TaskFiles
+                .Include(tf => tf.UploadedBy)
                 .Where(tf => tf.TaskId == taskId)
                 .ToListAsync();
 
             if (files == null || files.Count == 0)
                 return NotFound();
 
-            return Ok(files);
+            var result = files.Select(tf => new {
+                tf.Id,
+                tf.TaskId,
+                tf.FileName,
+                tf.ContentType,
+                tf.Content,
+                tf.UploadedAt,
+                tf.UploadedByUserId,
+                FullName = tf.UploadedBy != null ? tf.UploadedBy.FullName : null
+            });
+
+            return Ok(result);
         }
     }
 }

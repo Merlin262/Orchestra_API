@@ -24,6 +24,13 @@ namespace Orchestra.Data.Context
             modelBuilder.Entity<User>()
                 .HasMany(u => u.Roles)
                 .WithMany(r => r.Users);
+
+            // Configuração da relação TaskFile -> UploadedBy (User)
+            modelBuilder.Entity<TaskFile>()
+                .HasOne(tf => tf.UploadedBy)
+                .WithMany()
+                .HasForeignKey(tf => tf.UploadedByUserId)
+                .OnDelete(DeleteBehavior.Restrict); // ou DeleteBehavior.NoAction
         }
 
     }

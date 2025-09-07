@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Orchestra.Models
 {
@@ -12,5 +13,8 @@ namespace Orchestra.Models
         public string ContentType { get; set; }
         public byte[] Content { get; set; }
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+        public string UploadedByUserId { get; set; }
+        public User UploadedBy { get; set; }
+
     }
 }

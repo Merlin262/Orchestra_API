@@ -211,6 +211,13 @@ namespace Orchestra.Controllers
             if (task == null)
                 return NotFound("Task não encontrada.");
 
+            // Verifica se o usuário existe
+            if (string.IsNullOrEmpty(dto.UploadedBy))
+                return BadRequest("Usuário não informado.");
+            var user = await _context.Users.FindAsync(dto.UploadedBy);
+            if (user == null)
+                return NotFound("Usuário não encontrado.");
+
             using var ms = new MemoryStream();
             await file.CopyToAsync(ms);
             var fileEntity = new Models.TaskFile
@@ -220,11 +227,13 @@ namespace Orchestra.Controllers
                 FileName = file.FileName,
                 ContentType = file.ContentType,
                 Content = ms.ToArray(),
-                UploadedAt = DateTime.UtcNow
+                UploadedAt = DateTime.UtcNow,
+                UploadedByUserId = dto.UploadedBy,
+                UploadedBy = user
             };
             _context.TaskFiles.Add(fileEntity);
             await _context.SaveChangesAsync();
-            return Ok(new { fileEntity.Id, fileEntity.FileName });
+            return Ok(new { fileEntity.Id, fileEntity.FileName, fileEntity.UploadedByUserId });
         }
 
 

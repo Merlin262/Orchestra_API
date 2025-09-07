@@ -83,6 +83,7 @@ namespace Orchestra.Services
                 Name = name ?? baseline.Name,
                 XmlContent = baseline.XmlContent,
                 BpmnProcessBaselineId = baseline.Id,
+                PoolNames = baseline.PoolNames,
                 CreatedAt = DateTime.UtcNow,
                 version = baseline.Version,
                 Description = description ?? baseline.Description,
