@@ -15,6 +15,7 @@ namespace Orchestra.Data.Context
         public DbSet<BaselineHistory> BaselineHistories => Set<BaselineHistory>();
         public DbSet<Role> Roles { get; set; }
         public DbSet<TaskFile> TaskFiles { get; set; }
+        public DbSet<BaselineFile> BaselineFiles { get; set; } // Adicionado para arquivos de baseline
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -31,6 +32,20 @@ namespace Orchestra.Data.Context
                 .WithMany()
                 .HasForeignKey(tf => tf.UploadedByUserId)
                 .OnDelete(DeleteBehavior.Restrict); // ou DeleteBehavior.NoAction
+
+            // Configuração da relação BaselineFile -> UploadedBy (User)
+            modelBuilder.Entity<BaselineFile>()
+                .HasOne(bf => bf.UploadedBy)
+                .WithMany()
+                .HasForeignKey(bf => bf.UploadedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Configuração da relação BaselineFile -> Baseline
+            modelBuilder.Entity<BaselineFile>()
+                .HasOne(bf => bf.Baseline)
+                .WithMany()
+                .HasForeignKey(bf => bf.BaselineId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
 
     }
