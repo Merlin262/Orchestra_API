@@ -63,6 +63,9 @@ namespace Orchestra.Controllers
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return Unauthorized("Credenciais inválidas.");
 
+            if (!user.IsActive)
+                return Unauthorized("Usuário inativo. Entre em contato com o administrador.");
+
             var token = _jwtService.GenerateToken(user);
             return Ok(new { token });
         }
