@@ -10,6 +10,7 @@ using Orchestra.Serviecs;
 using Microsoft.AspNetCore.Authorization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using Orchestra.Enums;
 
 
 namespace Orchestra.Controllers
@@ -34,6 +35,8 @@ namespace Orchestra.Controllers
             if (existing)
                 return BadRequest("Usuário já existente.");
 
+            bool isFirstUser = !await _context.Users.AnyAsync();
+
             var user = new User
             {
                 Id = Guid.NewGuid().ToString(),
@@ -42,7 +45,9 @@ namespace Orchestra.Controllers
                 FullName = dto.FullName,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Roles = null,
-                ProfileType = dto.ProfileType
+                ProfileType = isFirstUser 
+                    ? new List<ProfileTypeEnum> { ProfileTypeEnum.ADM } 
+                    : new List<ProfileTypeEnum> { ProfileTypeEnum.Employee }
             };
 
             _context.Users.Add(user);
@@ -57,6 +62,9 @@ namespace Orchestra.Controllers
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 return Unauthorized("Credenciais inválidas.");
+
+            if (!user.IsActive)
+                return Unauthorized("Usuário inativo. Entre em contato com o administrador.");
 
             var token = _jwtService.GenerateToken(user);
             return Ok(new { token });

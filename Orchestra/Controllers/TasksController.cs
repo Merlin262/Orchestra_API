@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using MediatR;
@@ -15,7 +16,7 @@ using Orchestra.Hubs;
 
 namespace Orchestra.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class TasksController : ControllerBase
@@ -168,7 +169,6 @@ namespace Orchestra.Controllers
             return Ok(result);
         }
 
-
         [HttpPut("update-status")]
         public async Task<IActionResult> UpdateTaskStatus([FromBody] UpdateTaskStatusDto dto)
         {
@@ -198,5 +198,44 @@ namespace Orchestra.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("{taskId}/upload-file")]
+        [RequestSizeLimit(104857600)] // 100MB
+        public async Task<IActionResult> UploadFileToTask([FromRoute] Guid taskId, [FromForm] UploadTaskFileDto dto)
+        {
+            var file = dto.File;
+            if (file == null || file.Length == 0)
+                return BadRequest("Arquivo inválido.");
+
+            var task = await _context.Tasks.FindAsync(taskId);
+            if (task == null)
+                return NotFound("Task não encontrada.");
+
+            // Verifica se o usuário existe
+            if (string.IsNullOrEmpty(dto.UploadedBy))
+                return BadRequest("Usuário não informado.");
+            var user = await _context.Users.FindAsync(dto.UploadedBy);
+            if (user == null)
+                return NotFound("Usuário não encontrado.");
+
+            using var ms = new MemoryStream();
+            await file.CopyToAsync(ms);
+            var fileEntity = new Models.TaskFile
+            {
+                Id = Guid.NewGuid(),
+                TaskId = taskId,
+                FileName = file.FileName,
+                ContentType = file.ContentType,
+                Content = ms.ToArray(),
+                UploadedAt = DateTime.UtcNow,
+                UploadedByUserId = dto.UploadedBy,
+                UploadedBy = user
+            };
+            _context.TaskFiles.Add(fileEntity);
+            await _context.SaveChangesAsync();
+            return Ok(new { fileEntity.Id, fileEntity.FileName, fileEntity.UploadedByUserId });
+        }
+
+
     }
 }

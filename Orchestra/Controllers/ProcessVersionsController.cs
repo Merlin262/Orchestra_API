@@ -63,6 +63,7 @@ namespace Orchestra.Controllers
                 ActiveVersion = activeBaseline?.Version,
                 TotalInstances = totalInstances,
                 Baselines = baselineHistories.Select(h => new {
+                    Id = h.BpmnProcessBaselineId,
                     Version = h.Version,
                     Status = GetBaselineStatus(h, activeBaseline),
                     Name = h.Name,
@@ -71,7 +72,8 @@ namespace Orchestra.Controllers
                     ChangedAt = h.ChangedAt,
                     ChangeType = h.ChangeType,
                     Responsible = h.Responsible != null ? _context.Users.FirstOrDefault(u => u.Id == h.Responsible)?.FullName : null,
-                    InstancesCount = instances.Count(i => i.version == h.Version)
+                    InstancesCount = instances.Count(i => i.version == h.Version),
+                    XmlContent = h.XmlContent
                 }).OrderBy(h => h.Version).ToList(),
                 ActiveInstances = activeInstances.Select(i => new {
                     Version = i.version,

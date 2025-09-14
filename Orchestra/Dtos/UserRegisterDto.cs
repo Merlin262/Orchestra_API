@@ -17,6 +17,5 @@ namespace Orchestra.Dtos
         [Required]
         [MinLength(6)]
         public string Password { get; set; }
-        public ProfileTypeEnum ProfileType { get; set; }
     }
 }
