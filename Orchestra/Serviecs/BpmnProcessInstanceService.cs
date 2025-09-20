@@ -19,6 +19,7 @@ namespace Orchestra.Services
         private readonly IProcessStepRepository _stepRepository;
         private readonly IUserRepository _userRepository;
         private readonly ITasksRepository _tasksRepository;
+        private readonly ITaskService _taskService;
 
         public BpmnProcessInstanceService(
             IBpmnProcessBaselineRepository baselineRepository,
@@ -26,7 +27,8 @@ namespace Orchestra.Services
             IBpmnProcessInstanceRepository instanceRepository,
             IProcessStepRepository stepRepository,
             IUserRepository userRepository,
-            ITasksRepository tasksRepository)
+            ITasksRepository tasksRepository,
+            ITaskService taskService)
         {
             _baselineRepository = baselineRepository;
             _genericRepository = genericRepository;
@@ -34,6 +36,7 @@ namespace Orchestra.Services
             _stepRepository = stepRepository;
             _userRepository = userRepository;
             _tasksRepository = tasksRepository;
+            _taskService = taskService;
         }
 
         public Task<IEnumerable<BpmnProcessInstance>> GetAllAsync(CancellationToken cancellationToken)
@@ -164,6 +167,11 @@ namespace Orchestra.Services
             if (tasks.Count > 0)
             {
                 await _tasksRepository.AddRangeAsync(tasks);
+                // Após salvar, atualize o Pool de cada task usando o método do TaskService
+                foreach (var task in tasks)
+                {
+                    await _taskService.SetTaskPoolAsync(task, xmlContent ?? "");
+                }
             }
 
             return tasks;
