@@ -16,12 +16,7 @@ namespace Orchestra.Handler.BpmnBaseline.Querry.GetAll
 
         public async Task<IEnumerable<BpmnProcessBaseline>> Handle(GetAllBpmnProcessesQuery request, CancellationToken cancellationToken)
         {
-            var processes = await _repository.GetAllAsync(cancellationToken);
-            var latestBaselines = processes
-                .GroupBy(p => p.Name)
-                .Select(g => g.OrderByDescending(x => x.Version).First())
-                .ToList();
-            return latestBaselines;
+            return await _repository.GetAllAsync(cancellationToken);
         }
     }
 }

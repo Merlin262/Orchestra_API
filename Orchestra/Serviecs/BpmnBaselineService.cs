@@ -92,5 +92,69 @@ namespace Orchestra.Serviecs
             await _bpmnProcessBaselineRepository.UpdateAsync(baseline, cancellationToken);
             return baseline;
         }
+
+        public static string ConvertAssociationToDataOutputAssociation(string xmlContent)
+        {
+            var doc = XDocument.Parse(xmlContent, LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo);
+
+            // Namespace BPMN (assume que o namespace padrão do root é o BPMN model namespace)
+            XNamespace bpmn = doc.Root.GetDefaultNamespace();
+
+            // Coleta todas as associations existentes (em lista para evitar alteração durante iteração)
+            var associations = doc.Descendants(bpmn + "association").ToList();
+
+            foreach (var assoc in associations)
+            {
+                string assocId = (string)assoc.Attribute("id");
+                string sourceRef = (string)assoc.Attribute("sourceRef");
+                string targetRef = (string)assoc.Attribute("targetRef");
+
+                // monta o novo elemento dataOutputAssociation com o MESMO id (importante para preservar DI)
+                var dataOutput = new XElement(bpmn + "dataOutputAssociation",
+                    new XAttribute("id", assocId)
+                );
+
+                // adiciona sourceRef/targetRef como nós filhos (formato aceito pelos viewers)
+                if (!string.IsNullOrEmpty(sourceRef))
+                    dataOutput.Add(new XElement(bpmn + "sourceRef", sourceRef));
+                if (!string.IsNullOrEmpty(targetRef))
+                    dataOutput.Add(new XElement(bpmn + "targetRef", targetRef));
+
+                // Se a association tinha extensionElements, copie para o novo elemento
+                var ext = assoc.Elements().FirstOrDefault(e => e.Name.LocalName == "extensionElements");
+                if (ext != null)
+                {
+                    // clone extensionElements (mantém conteúdo)
+                    dataOutput.Add(new XElement(ext));
+                }
+
+                // tenta localizar a task cujo id == sourceRef
+                XElement task = null;
+                if (!string.IsNullOrEmpty(sourceRef))
+                {
+                    task = doc.Descendants(bpmn + "task")
+                              .FirstOrDefault(t => (string)t.Attribute("id") == sourceRef);
+                }
+
+                if (task != null)
+                {
+                    // evita duplicidade de id dentro da task
+                    bool alreadyHas = task.DescendantsAndSelf().Any(e => (string)e.Attribute("id") == assocId);
+                    if (!alreadyHas)
+                    {
+                        task.Add(dataOutput);
+                    }
+                    // remove a antiga association (no nível do processo)
+                    assoc.Remove();
+                }
+                else
+                {
+                    // se não encontrou a task, substitui a association no mesmo lugar por dataOutputAssociation
+                    assoc.ReplaceWith(dataOutput);
+                }
+            }
+
+            return doc.ToString();
+        }
     }
 }

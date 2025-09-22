@@ -31,6 +31,9 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
             // Corrige os dataObject para dataObjectReference
             xmlContent = _bpmnBaselineService.FixDataObjectToDataObjectReference(xmlContent);
 
+            // Transforma associações
+            xmlContent = BpmnBaselineService.ConvertAssociationToDataOutputAssociation(xmlContent);
+
             //string? processName = ExtractProcessNameFromXml(xmlContent);
 
             var poolNames = _bpmnBaselineService.ExtractPoolNames(xmlContent);
