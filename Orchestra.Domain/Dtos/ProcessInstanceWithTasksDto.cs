@@ -1,0 +1,18 @@
+﻿using Orchestra.Enums;
+
+namespace Orchestra.Dtos
+{
+    public class ProcessInstanceWithTasksDto
+    {
+        public int ProcessInstanceId { get; set; }
+        public string? Name { get; set; }
+        public string? XmlContent { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public int BpmnProcessBaselineId { get; set; }
+        public List<string> PoolNames { get; set; }
+        public List<TaskWithUserDto> Tasks { get; set; }
+        public double? version { get; set; }
+        public StatusEnum Status { get; set; }
+        public string? ResponsibleName { get; set; }
+    }
+}

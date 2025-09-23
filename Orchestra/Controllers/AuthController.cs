@@ -11,6 +11,10 @@ using Microsoft.AspNetCore.Authorization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Orchestra.Enums;
+using Orchestra.Application.Auth;
+using Orchestra.Serviecs.Intefaces;
+using Orchestra.Application.Auth.Command;
+using Orchestra.Application.Auth.Query;
 
 
 namespace Orchestra.Controllers
@@ -19,91 +23,55 @@ namespace Orchestra.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IUserService _userService;
         private readonly JwtService _jwtService;
 
-        public AuthController(ApplicationDbContext context, JwtService jwtService)
+        public AuthController(IUserService userService, JwtService jwtService)
         {
-            _context = context;
+            _userService = userService;
             _jwtService = jwtService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register(UserRegisterDto dto)
         {
-            var existing = await _context.Users.AnyAsync(u => u.Email == dto.Email || u.UserName == dto.UserName);
-            if (existing)
-                return BadRequest("Usuário já existente.");
-
-            bool isFirstUser = !await _context.Users.AnyAsync();
-
-            var user = new User
-            {
-                Id = Guid.NewGuid().ToString(),
-                UserName = dto.UserName,
-                Email = dto.Email,
-                FullName = dto.FullName,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-                Roles = null,
-                ProfileType = isFirstUser 
-                    ? new List<ProfileTypeEnum> { ProfileTypeEnum.ADM } 
-                    : new List<ProfileTypeEnum> { ProfileTypeEnum.Employee }
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return Ok("Usuário registrado com sucesso.");
+            var handler = new RegisterUserHandler(_userService);
+            var result = await handler.Handle(dto);
+            if (!result.Success)
+                return BadRequest(result.Message);
+            return Ok(result.Message);
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(UserLoginDto dto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
-            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
-                return Unauthorized("Credenciais inválidas.");
-
-            if (!user.IsActive)
-                return Unauthorized("Usuário inativo. Entre em contato com o administrador.");
-
-            var token = _jwtService.GenerateToken(user);
-            return Ok(new { token });
+            var handler = new LoginUserHandler(_userService, _jwtService);
+            var result = await handler.Handle(dto);
+            if (!result.Success)
+                return Unauthorized(result.Message);
+            return Ok(new { token = result.Token });
         }
 
         [HttpGet("me")]
         [Authorize]
         public async Task<IActionResult> Me()
         {
-            // Obtém o token do header Authorization
             var authHeader = Request.Headers["Authorization"].FirstOrDefault();
             if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
                 return Unauthorized("Token não fornecido.");
 
             var token = authHeader.Substring("Bearer ".Length).Trim();
 
-            // Valida o token e extrai o userId
-            string userId;
-            try
+            var handler = new GetAuthenticatedUserHandler(_userService);
+            var result = await handler.Handle(token);
+            if (!result.Success)
             {
-                var handler = new JwtSecurityTokenHandler();
-                var jwtToken = handler.ReadJwtToken(token);
-                userId = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "id")?.Value;
-                if (string.IsNullOrEmpty(userId))
-                    return Unauthorized("Token inválido.");
-            }
-            catch
-            {
-                return Unauthorized("Token inválido.");
+                if (result.Message == "Usuário não encontrado.")
+                    return NotFound(result.Message);
+                return Unauthorized(result.Message);
             }
 
-            // Busca o usuário no banco de dados
-            var user = await _context.Users
-                .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Id == userId);
-
-            if (user == null)
-                return NotFound("Usuário não encontrado.");
-
+            var user = result.User;
             return Ok(new
             {
                 success = true,

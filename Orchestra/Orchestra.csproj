@@ -30,14 +30,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Orchestra.Application\Orchestra.Application.csproj" />
+    <ProjectReference Include="..\Orchestra.Infrastructure\Orchestra.Infrastructure.csproj" />
     <ProjectReference Include="..\Orchestra.ServiceDefaults\Orchestra.ServiceDefaults.csproj" />
+    <ProjectReference Include="..\Orchestra.Services\Orchestra.Services.csproj" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Handler\Tasks\Query\GetById\" />
-    <Folder Include="Handler\Tasks\Query\GetAll\" />
-    <Folder Include="Handler\User\Query\GetUserByGroup\" />
   </ItemGroup>
 
 </Project>

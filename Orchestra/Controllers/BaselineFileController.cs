@@ -7,6 +7,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using MediatR;
+using Orchestra.Application.BaselineFile.Query;
+using Orchestra.Application.BaselineFile.Query.GetBaselineFileContent;
+using Orchestra.Application.BaselineFile.Query.GetBaselineFilesByBaselineId;
 
 namespace Orchestra.Controllers
 {
@@ -15,10 +19,12 @@ namespace Orchestra.Controllers
     public class BaselineFileController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IMediator _mediator;
 
-        public BaselineFileController(ApplicationDbContext context)
+        public BaselineFileController(ApplicationDbContext context, IMediator mediator)
         {
             _context = context;
+            _mediator = mediator;
         }
 
         // POST: api/BaselineFile/upload/{baselineId}
@@ -58,22 +64,11 @@ namespace Orchestra.Controllers
         [HttpGet("by-baseline/{baselineId}")]
         public async Task<IActionResult> GetFilesByBaselineId([FromRoute] int baselineId)
         {
-            var files = await _context.BaselineFiles
-                .Include(f => f.UploadedBy)
-                .Where(f => f.BaselineId == baselineId)
-                .Select(f => new {
-                    f.Id,
-                    f.FileName,
-                    f.ContentType,
-                    f.UploadedAt,
-                    UploadedByName = f.UploadedBy != null ? f.UploadedBy.FullName : null,
-                    f.XmlTaskId
-                })
-                .ToListAsync();
-
+            var files = await _mediator.Send(
+                new GetBaselineFilesByBaselineIdQuery(baselineId)
+            );
             if (files == null || files.Count == 0)
                 return NotFound("Nenhum documento encontrado para esta baseline.");
-
             return Ok(files);
         }
 
@@ -81,11 +76,11 @@ namespace Orchestra.Controllers
         [HttpGet("content/{id}")]
         public async Task<IActionResult> GetFileContent([FromRoute] Guid id)
         {
-            var file = await _context.BaselineFiles.FindAsync(id);
-            if (file == null)
+            var result = await _mediator.Send(new GetBaselineFileContentQuery(id));
+            if (result == null)
                 return NotFound("Arquivo não encontrado.");
 
-            return File(file.Content, file.ContentType, file.FileName);
+            return File(result.Content, result.ContentType, result.FileName);
         }
     }
 }
