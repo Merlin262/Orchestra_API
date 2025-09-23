@@ -13,6 +13,8 @@ using Orchestra.Dtos;
 using Orchestra.Models;
 using Microsoft.AspNetCore.SignalR;
 using Orchestra.Hubs;
+using Orchestra.Handler.Tasks.Querry.GetProcessInstancesWithUserTasks;
+using Orchestra.Handler.Tasks.Command.AssignUser;
 
 namespace Orchestra.Controllers
 {
@@ -125,7 +127,7 @@ namespace Orchestra.Controllers
         [HttpPut("assign-user")]
         public async Task<IActionResult> AssignUserToTask([FromBody] AssignUserToTaskDto dto)
         {
-            var command = new Handler.Tasks.Command.AssignUser.AssignUserToTaskCommand(dto.TaskId, dto.UserId, dto.ProcessInstanceId);
+            var command = new AssignUserToTaskCommand(dto.TaskId, dto.UserId, dto.ProcessInstanceId);
             var result = await _mediator.Send(command);
 
             if (!result)
@@ -156,7 +158,7 @@ namespace Orchestra.Controllers
         [HttpGet("user-process-instances/{userId}")]
         public async Task<IActionResult> GetProcessInstancesWithUserTasks(string userId, CancellationToken cancellationToken)
         {
-            var query = new Handler.Tasks.Querry.GetProcessInstancesWithUserTasks.GetProcessInstancesWithUserTasksQuery(userId, cancellationToken);
+            var query = new GetProcessInstancesWithUserTasksQuery(userId, cancellationToken);
             var result = await _mediator.Send(query, cancellationToken);
 
             if (result == null || result.Count == 0)

@@ -1,10 +1,15 @@
+using HotChocolate.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Orchestra.Data.Context;
+using Orchestra.Domain.Repositories;
+using Orchestra.Domain.Services;
 using Orchestra.GraphQLConfig;
+using Orchestra.Hubs;
+using Orchestra.Infrastructure.Repositories;
 using Orchestra.Models.Orchestra.Models;
 using Orchestra.Repoitories;
 using Orchestra.Repoitories.Interfaces;
@@ -12,8 +17,8 @@ using Orchestra.Services;
 using Orchestra.Serviecs;
 using Orchestra.Serviecs.Intefaces;
 using System.Text;
-using HotChocolate.AspNetCore;
-using Orchestra.Hubs;
+using System.Reflection;
+using Orchestra.Services.Serviecs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,7 +84,11 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add MediatR services
-builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+    cfg.RegisterServicesFromAssembly(Assembly.Load("Orchestra.Application"));
+});
 
 // Adicione esta linha para registrar o reposit�rio
 builder.Services.AddScoped<IBpmnProcessRepository, BpmnProcessRepository>();
@@ -93,6 +102,9 @@ builder.Services.AddScoped<IBpmnProcessInstanceService, BpmnProcessInstanceServi
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBpmnBaselineService, BpmnBaselineService>();
+builder.Services.AddScoped<IBaselineHistoryRepository, BaselineHistoryRepository>();
+builder.Services.AddScoped<IBaselineFileService, BaselineFileService>();
+builder.Services.AddScoped<IBaselineFileRepository, BaselineFileRepository>();
 
 // Build do app (deve vir depois da configura��o de servi�os)
 var app = builder.Build();

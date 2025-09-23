@@ -45,6 +45,12 @@ namespace Orchestra.Controllers
         [HttpPost]
         public async Task<ActionResult<RoleDto>> CreateRole(CreateRoleDto dto)
         {
+            // Verifica se já existe um role com o mesmo nome
+            var existingRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == dto.role);
+            if (existingRole != null)
+            {
+                return BadRequest($"Role com nome '{dto.role}' já existe.");
+            }
             var role = new Role { Id = Guid.NewGuid().ToString(), Name = dto.role };
             _context.Roles.Add(role);
             await _context.SaveChangesAsync();
