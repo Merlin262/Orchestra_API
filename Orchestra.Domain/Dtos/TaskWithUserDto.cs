@@ -13,5 +13,6 @@ namespace Orchestra.Dtos
         public DateTime? CompletedAt { get; set; }
         public string? Comments { get; set; }
         public UserDto? ResponsibleUser { get; set; }
+        public string? Pool { get; set; }
     }
 }
