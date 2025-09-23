@@ -1,4 +1,6 @@
-﻿using Orchestra.Dtos;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Orchestra.Dtos;
 using Orchestra.Models;
 using Orchestra.Models.Orchestra.Models;
 
@@ -13,5 +15,6 @@ namespace Orchestra.Serviecs.Intefaces
         Task<bool> UpdateTaskStatusAsync(Guid taskId, int statusId, CancellationToken cancellationToken = default);
         Task<bool> AssignUserToTaskAsync(int bpmnProcessInstanceId, string xmlTaskId, string userId, CancellationToken cancellationToken = default);
         Task<bool> UnassignUserFromTaskAsync(Guid taskId, CancellationToken cancellationToken = default);
+        Task<bool> SetTaskPoolAsync(Tasks task, string xmlContent, CancellationToken cancellationToken = default);
     }
 }

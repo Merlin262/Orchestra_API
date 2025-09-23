@@ -5,6 +5,7 @@ using Orchestra.Models.Orchestra.Models;
 using Orchestra.Repoitories;
 using Orchestra.Repoitories.Interfaces;
 using Orchestra.Serviecs.Intefaces;
+using System.Xml.Linq;
 
 namespace Orchestra.Services
 {
@@ -35,6 +36,7 @@ namespace Orchestra.Services
                 CreatedAt = t.CreatedAt,
                 CompletedAt = t.CompletedAt,
                 Comments = t.Comments,
+                Pool = t.Pool,
                 ResponsibleUser = t.ResponsibleUser == null ? null : new UserDto
                 {
                     Id = t.ResponsibleUser.Id,
@@ -171,5 +173,117 @@ namespace Orchestra.Services
 
             return true;
         }
+
+        public async Task<bool> SetTaskPoolAsync(Tasks task, string xmlContent, CancellationToken cancellationToken = default)
+        {
+            // Use GetTasksWithLanes to find the lane/pool for the given task
+            var tasksWithLanes = GetTasksWithLanes(xmlContent);
+            var laneTuple = tasksWithLanes.FirstOrDefault(t => t.TaskName == task.Name);
+            var laneName = laneTuple.LaneName;
+            if (string.IsNullOrEmpty(laneName))
+                return false;
+
+            task.Pool = laneName;
+            await _tasksRepository.UpdateAsync(task, cancellationToken);
+            return true;
+        }
+
+        /// <summary>
+        /// Identifica a pool da task pelo XmlTaskId e salva no banco.
+        /// Busca recursivamente em lanes e childLaneSet.
+        /// </summary>
+        public static List<(string TaskName, string LaneName)> GetTasksWithLanes(string bpmnXml)
+        {
+            var doc = XDocument.Parse(bpmnXml);
+
+            // Namespaces usados no BPMN
+            XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
+            XNamespace di = "http://www.omg.org/spec/BPMN/20100524/DI";
+            XNamespace dc = "http://www.omg.org/spec/DD/20100524/DC";
+
+            // 1. Mapear lanes -> Bounds
+            var lanes = doc.Descendants(bpmn + "lane")
+                .Select(l => new
+                {
+                    Id = l.Attribute("id")?.Value,
+                    Name = l.Attribute("name")?.Value
+                }).ToList();
+
+            var laneBounds = doc.Descendants(di + "BPMNShape")
+                .Where(s => lanes.Any(l => l.Id == s.Attribute("bpmnElement")?.Value))
+                .Select(s => new
+                {
+                    LaneId = s.Attribute("bpmnElement")?.Value,
+                    Bounds = s.Element(dc + "Bounds")
+                })
+                .ToDictionary(
+                    s => s.LaneId,
+                    s => new
+                    {
+                        X = double.Parse(s.Bounds.Attribute("x")?.Value ?? "0"),
+                        Y = double.Parse(s.Bounds.Attribute("y")?.Value ?? "0"),
+                        Width = double.Parse(s.Bounds.Attribute("width")?.Value ?? "0"),
+                        Height = double.Parse(s.Bounds.Attribute("height")?.Value ?? "0")
+                    }
+                );
+
+            // 2. Mapear tasks -> Bounds
+            var tasks = doc.Descendants(bpmn + "task")
+                .Select(t => new
+                {
+                    Id = t.Attribute("id")?.Value,
+                    Name = t.Attribute("name")?.Value
+                }).ToList();
+
+            var taskBounds = doc.Descendants(di + "BPMNShape")
+                .Where(s => tasks.Any(t => t.Id == s.Attribute("bpmnElement")?.Value))
+                .Select(s => new
+                {
+                    TaskId = s.Attribute("bpmnElement")?.Value,
+                    Bounds = s.Element(dc + "Bounds")
+                })
+                .ToDictionary(
+                    s => s.TaskId,
+                    s => new
+                    {
+                        X = double.Parse(s.Bounds.Attribute("x")?.Value ?? "0"),
+                        Y = double.Parse(s.Bounds.Attribute("y")?.Value ?? "0"),
+                        Width = double.Parse(s.Bounds.Attribute("width")?.Value ?? "0"),
+                        Height = double.Parse(s.Bounds.Attribute("height")?.Value ?? "0")
+                    }
+                );
+
+            var result = new List<(string TaskName, string LaneName)>();
+
+            // 3. Para cada task, verificar em qual lane está
+            foreach (var task in tasks)
+            {
+                if (!taskBounds.TryGetValue(task.Id, out var tb))
+                    continue;
+
+                string laneName = "Desconhecida";
+
+                foreach (var lane in lanes)
+                {
+                    if (!laneBounds.TryGetValue(lane.Id, out var lb))
+                        continue;
+
+                    bool insideX = tb.X >= lb.X && (tb.X + tb.Width) <= (lb.X + lb.Width);
+                    bool insideY = tb.Y >= lb.Y && (tb.Y + tb.Height) <= (lb.Y + lb.Height);
+
+                    if (insideX && insideY)
+                    {
+                        laneName = lane.Name;
+                        break;
+                    }
+                }
+
+                result.Add((task.Name, laneName));
+            }
+
+            return result;
+        }
+
+
     }
 }
