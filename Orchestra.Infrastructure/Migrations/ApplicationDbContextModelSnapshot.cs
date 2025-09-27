@@ -325,6 +325,9 @@ namespace Orchestra.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Pool")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<Guid>("ProcessStepId")
                         .HasColumnType("uniqueidentifier");
 
