@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.SignalR;
 using Orchestra.Hubs;
 using Orchestra.Handler.Tasks.Querry.GetProcessInstancesWithUserTasks;
 using Orchestra.Handler.Tasks.Command.AssignUser;
+using Orchestra.Enums;
 
 namespace Orchestra.Controllers
 {
@@ -237,6 +238,40 @@ namespace Orchestra.Controllers
             await _context.SaveChangesAsync();
             return Ok(new { fileEntity.Id, fileEntity.FileName, fileEntity.UploadedByUserId });
         }
+
+        [HttpPut("disable-tasks")]
+        public async Task<IActionResult> DisableTasks([FromBody] DisableTasksDto dto)
+        {
+            if ((dto?.DisableTaskIds == null || !dto.DisableTaskIds.Any()) && (dto?.AbleTaskIds == null || !dto.AbleTaskIds.Any()))
+                return BadRequest("Nenhum id de task fornecido.");
+
+            int disabledCount = 0;
+            int enabledCount = 0;
+
+            if (dto.DisableTaskIds != null && dto.DisableTaskIds.Any())
+            {
+                var disableTasks = await _context.Tasks.Where(t => dto.DisableTaskIds.Contains(t.Id)).ToListAsync();
+                foreach (var task in disableTasks)
+                {
+                    task.Status = StatusEnum.Disabled;
+                    disabledCount++;
+                }
+            }
+
+            if (dto.AbleTaskIds != null && dto.AbleTaskIds.Any())
+            {
+                var ableTasks = await _context.Tasks.Where(t => dto.AbleTaskIds.Contains(t.Id)).ToListAsync();
+                foreach (var task in ableTasks)
+                {
+                    task.Status = StatusEnum.NotStarted;
+                    enabledCount++;
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { DisabledCount = disabledCount, EnabledCount = enabledCount });
+        }
+
 
 
     }

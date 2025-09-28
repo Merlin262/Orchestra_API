@@ -40,7 +40,8 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
                 XmlContent = xmlContent,
                 CreatedAt = DateTime.UtcNow,
                 PoolNames = poolNames,
-                CreatedByUser = createdByUser,
+                //CreatedByUser = createdByUser,
+                CreatedByUserId = createdByUser.Id,
                 Version = 1.0,
                 Description = request.Description,
                 IsActive = true
@@ -68,6 +69,44 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
             return process;
         }
 
+        private Dictionary<string, List<string>> GetNextStepMap(XDocument xDoc, XNamespace bpmn)
+        {
+            // Mapeia todos os sequenceFlows: sourceRef -> targetRef
+            var sequenceFlows = xDoc.Descendants(bpmn + "sequenceFlow")
+                .Select(sf => new {
+                    SourceRef = sf.Attribute("sourceRef")?.Value,
+                    TargetRef = sf.Attribute("targetRef")?.Value
+                })
+                .Where(sf => sf.SourceRef != null && sf.TargetRef != null)
+                .ToList();
+
+            // Cria um dicionário de NextStepId: elementoId -> lista de próximos ids
+            var nextStepMap = sequenceFlows
+                .GroupBy(sf => sf.SourceRef)
+                .ToDictionary(g => g.Key, g => g.Select(sf => sf.TargetRef).ToList());
+
+            return nextStepMap;
+        }
+
+        private Dictionary<string, List<string>> GetPreviousStepMap(XDocument xDoc, XNamespace bpmn)
+        {
+            // Mapeia todos os sequenceFlows: targetRef -> sourceRef
+            var sequenceFlows = xDoc.Descendants(bpmn + "sequenceFlow")
+                .Select(sf => new {
+                    SourceRef = sf.Attribute("sourceRef")?.Value,
+                    TargetRef = sf.Attribute("targetRef")?.Value
+                })
+                .Where(sf => sf.SourceRef != null && sf.TargetRef != null)
+                .ToList();
+
+            // Cria um dicionário de PreviousStepId: elementoId -> lista de anteriores ids
+            var previousStepMap = sequenceFlows
+                .GroupBy(sf => sf.TargetRef)
+                .ToDictionary(g => g.Key, g => g.Select(sf => sf.SourceRef).ToList());
+
+            return previousStepMap;
+        }
+
         public async Task ParseAndSaveSteps(string xmlContent, int bpmnProcessId, CancellationToken cancellationToken)
         {
             var xDoc = XDocument.Parse(xmlContent);
@@ -78,21 +117,37 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
             // Lista de elementos de interesse (pode ser expandida)
             var elementTypes = new[] { "startEvent", "task", "userTask", "scriptTask", "exclusiveGateway", "endEvent" };
 
-            foreach (var type in elementTypes)
+            // Mapeia todos os elementos de interesse pelo id
+            var elementIdToType = xDoc.Descendants()
+                .Where(e => elementTypes.Contains(e.Name.LocalName))
+                .ToDictionary(e => e.Attribute("id")?.Value, e => e.Name.LocalName);
+
+            // Obtém o mapeamento dos próximos passos
+            var nextStepMap = GetNextStepMap(xDoc, bpmn);
+            // Obtém o mapeamento dos passos anteriores
+            var previousStepMap = GetPreviousStepMap(xDoc, bpmn);
+
+            foreach (var kvp in elementIdToType)
             {
-                var elements = xDoc.Descendants(bpmn + type);
-                foreach (var element in elements)
+                var elementId = kvp.Key;
+                var type = kvp.Value;
+                var element = xDoc.Descendants(bpmn + type).FirstOrDefault(e => e.Attribute("id")?.Value == elementId);
+                if (element == null) continue;
+
+                var nextStepIds = nextStepMap.ContainsKey(elementId) ? nextStepMap[elementId] : new List<string>();
+                var previousStepIds = previousStepMap.ContainsKey(elementId) ? previousStepMap[elementId] : new List<string>();
+                // Para simplificação, salva apenas o primeiro NextStepId e o primeiro LastStepId (pode ser adaptado para múltiplos)
+                var step = new ProcessStep
                 {
-                    var step = new ProcessStep
-                    {
-                        Id = Guid.NewGuid(),
-                        BpmnId = element.Attribute("id")?.Value ?? Guid.NewGuid().ToString(),
-                        Name = element.Attribute("name")?.Value ?? type,
-                        Type = type,
-                        BpmnProcessId = bpmnProcessId
-                    };
-                    steps.Add(step);
-                }
+                    Id = Guid.NewGuid(),
+                    BpmnId = elementId ?? Guid.NewGuid().ToString(),
+                    Name = element.Attribute("name")?.Value ?? type,
+                    NextStepId = nextStepIds.FirstOrDefault(),
+                    LastStepId = previousStepIds.FirstOrDefault(),
+                    Type = type,
+                    BpmnProcessId = bpmnProcessId
+                };
+                steps.Add(step);
             }
 
             if (steps.Any())
