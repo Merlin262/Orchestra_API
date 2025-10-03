@@ -231,12 +231,24 @@ namespace Orchestra.Controllers
                 {
                     var startStep = nextSteps[i];
                     var pathIds = allPathIds[i];
-                    // Verifica exclusividade: só inclui BpmnIds que não estão em outros caminhos
-                    var exclusiveIds = pathIds.Where(id => !allPathIds.Where((set, idx) => idx != i).Any(set => set.Contains(id))).ToList();
-                    var pathTasks = new List<object>();
-                    foreach (var bpmnId in exclusiveIds)
+                    // Percorre o caminho até encontrar um gateway
+                    var currentStep = startStep;
+                    bool foundGateway = false;
+                    while (currentStep != null)
                     {
-                        var stepTasks = tasks.Where(t => t.XmlTaskId == bpmnId).Select(t => new {
+                        if (currentStep != startStep && currentStep.Type == "exclusiveGateway")
+                        {
+                            foundGateway = true;
+                            break;
+                        }
+                        if (string.IsNullOrEmpty(currentStep.NextStepId)) break;
+                        currentStep = steps.FirstOrDefault(s => s.BpmnId == currentStep.NextStepId);
+                    }
+                    var pathTasks = new List<object>();
+                    if (foundGateway)
+                    {
+                        // Se encontrou um gateway, retorna apenas a primeira task do caminho
+                        var firstTask = tasks.Where(t => t.XmlTaskId == startStep.BpmnId).Select(t => new {
                             t.Id,
                             t.XmlTaskId,
                             t.Status,
@@ -244,8 +256,46 @@ namespace Orchestra.Controllers
                             t.Completed,
                             t.CompletedAt,
                             t.ResponsibleUserId
-                        }).ToList();
-                        pathTasks.AddRange(stepTasks);
+                        }).FirstOrDefault();
+                        if (firstTask != null)
+                        {
+                            pathTasks.Add(firstTask);
+                        }
+                    }
+                    else
+                    {
+                        // Caso contrário, segue a lógica anterior de exclusividade
+                        var exclusiveIds = pathIds.Where(id => !allPathIds.Where((set, idx) => idx != i).Any(set => set.Contains(id))).ToList();
+                        foreach (var bpmnId in exclusiveIds)
+                        {
+                            var stepTasks = tasks.Where(t => t.XmlTaskId == bpmnId).Select(t => new {
+                                t.Id,
+                                t.XmlTaskId,
+                                t.Status,
+                                t.Name,
+                                t.Completed,
+                                t.CompletedAt,
+                                t.ResponsibleUserId
+                            }).ToList();
+                            pathTasks.AddRange(stepTasks);
+                        }
+                        // Se não houver tasks exclusivas, inclui a primeira task do caminho
+                        if (!pathTasks.Any())
+                        {
+                            var firstTask = tasks.Where(t => t.XmlTaskId == startStep.BpmnId).Select(t => new {
+                                t.Id,
+                                t.XmlTaskId,
+                                t.Status,
+                                t.Name,
+                                t.Completed,
+                                t.CompletedAt,
+                                t.ResponsibleUserId
+                            }).FirstOrDefault();
+                            if (firstTask != null)
+                            {
+                                pathTasks.Add(firstTask);
+                            }
+                        }
                     }
                     // Busca o texto da opção no XML
                     string optionText = startStep.Name;
