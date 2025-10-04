@@ -14,5 +14,5 @@ namespace Orchestra.Dtos
         public double? version { get; set; }
         public StatusEnum Status { get; set; }
         public string? ResponsibleName { get; set; }
-    }
+    } 
 }

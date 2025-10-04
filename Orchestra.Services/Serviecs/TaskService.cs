@@ -104,6 +104,7 @@ namespace Orchestra.Services
                 XmlTaskId = t.XmlTaskId,
                 Completed = t.Completed,
                 StatusId = (int)t.Status,
+                AssigmentAt = t.AssigmentAt,
                 CreatedAt = t.CreatedAt,
                 CompletedAt = t.CompletedAt,
                 Comments = t.Comments,
@@ -143,6 +144,7 @@ namespace Orchestra.Services
             var task = (await _tasksRepository.GetAllAsync(cancellationToken))
                 .FirstOrDefault(t => t.XmlTaskId == xmlTaskId && t.BpmnProcessId == processInstanceId);
 
+            task.AssigmentAt = DateTime.UtcNow;
 
             if (task == null)
                 return false;
@@ -165,6 +167,8 @@ namespace Orchestra.Services
             var task = await _tasksRepository.GetByIdAsync(taskId, cancellationToken);
             if (task == null || string.IsNullOrEmpty(task.ResponsibleUserId))
                 return false;
+
+            task.AssigmentAt = null;
 
             task.ResponsibleUserId = null;
             task.ResponsibleUser = null;

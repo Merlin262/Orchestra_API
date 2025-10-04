@@ -14,5 +14,6 @@ namespace Orchestra.Dtos
         public string? Comments { get; set; }
         public UserDto? ResponsibleUser { get; set; }
         public string? Pool { get; set; }
+        public DateTime? AssigmentAt { get; set; }
     }
 }

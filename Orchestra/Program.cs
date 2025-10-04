@@ -81,7 +81,11 @@ builder.Services.Configure<FormOptions>(options =>
 
 // DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        b => b.MigrationsAssembly("Orchestra.Infrastructure")
+    )
+);
 
 // Add MediatR services
 builder.Services.AddMediatR(cfg =>
@@ -105,6 +109,7 @@ builder.Services.AddScoped<IBpmnBaselineService, BpmnBaselineService>();
 builder.Services.AddScoped<IBaselineHistoryRepository, BaselineHistoryRepository>();
 builder.Services.AddScoped<IBaselineFileService, BaselineFileService>();
 builder.Services.AddScoped<IBaselineFileRepository, BaselineFileRepository>();
+
 
 // Build do app (deve vir depois da configura��o de servi�os)
 var app = builder.Build();
