@@ -22,5 +22,6 @@ namespace Orchestra.Models
         public string? Comments { get; set; }
         public StatusEnum Status { get; set; }
         public string? Pool { get; set; }
+        public DateTime? AssigmentAt { get; set; }
     }
 }

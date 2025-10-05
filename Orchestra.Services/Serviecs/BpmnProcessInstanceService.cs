@@ -230,6 +230,7 @@ namespace Orchestra.Services
                             Completed = t.Completed,
                             StatusId = (int)t.Status,
                             CreatedAt = t.CreatedAt,
+                            AssigmentAt = t.AssigmentAt,
                             CompletedAt = t.CompletedAt,
                             Comments = t.Comments,
                             ResponsibleUser = t.ResponsibleUser == null ? null : new UserDto
