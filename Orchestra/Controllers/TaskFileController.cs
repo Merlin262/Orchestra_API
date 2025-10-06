@@ -30,7 +30,7 @@ namespace Orchestra.Controllers
                 .ToListAsync();
 
             if (files == null || files.Count == 0)
-                return NotFound();
+                return NoContent();
 
             var result = files.Select(tf => new {
                 tf.Id,
