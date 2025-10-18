@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Orchestra.Data.Context;
 
@@ -11,9 +12,11 @@ using Orchestra.Data.Context;
 namespace Orchestra.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251007012810_teste2")]
+    partial class teste2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -21,42 +24,6 @@ namespace Orchestra.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("Orchestra.Domain.Models.SubProcess", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("BaselineHistoryId")
-                        .HasColumnType("int");
-
-                    b.Property<double>("BaselineVersion")
-                        .HasColumnType("float");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("ProcessBaselineId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("XmlContent")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BaselineHistoryId");
-
-                    b.HasIndex("ProcessBaselineId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("SubProcesses");
-                });
 
             modelBuilder.Entity("Orchestra.Models.BaselineFile", b =>
                 {
@@ -376,9 +343,6 @@ namespace Orchestra.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("int");
 
-                    b.Property<Guid?>("SubProcessId")
-                        .HasColumnType("uniqueidentifier");
-
                     b.Property<string>("XmlTaskId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -390,8 +354,6 @@ namespace Orchestra.Migrations
                     b.HasIndex("ProcessStepId");
 
                     b.HasIndex("ResponsibleUserId");
-
-                    b.HasIndex("SubProcessId");
 
                     b.ToTable("Tasks");
                 });
@@ -445,31 +407,6 @@ namespace Orchestra.Migrations
                     b.HasIndex("UsersId");
 
                     b.ToTable("RoleUser");
-                });
-
-            modelBuilder.Entity("Orchestra.Domain.Models.SubProcess", b =>
-                {
-                    b.HasOne("Orchestra.Models.BaselineHistory", "BaselineHistory")
-                        .WithMany()
-                        .HasForeignKey("BaselineHistoryId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("Orchestra.Models.BpmnProcessBaseline", "ProcessBaseline")
-                        .WithMany("SubProcesses")
-                        .HasForeignKey("ProcessBaselineId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Orchestra.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("BaselineHistory");
-
-                    b.Navigation("ProcessBaseline");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Orchestra.Models.BaselineFile", b =>
@@ -567,18 +504,11 @@ namespace Orchestra.Migrations
                         .WithMany("AssignedTasks")
                         .HasForeignKey("ResponsibleUserId");
 
-                    b.HasOne("Orchestra.Domain.Models.SubProcess", "SubProcess")
-                        .WithMany("Tasks")
-                        .HasForeignKey("SubProcessId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.Navigation("BpmnProcess");
 
                     b.Navigation("ProcessStep");
 
                     b.Navigation("ResponsibleUser");
-
-                    b.Navigation("SubProcess");
                 });
 
             modelBuilder.Entity("RoleUser", b =>
@@ -594,16 +524,6 @@ namespace Orchestra.Migrations
                         .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("Orchestra.Domain.Models.SubProcess", b =>
-                {
-                    b.Navigation("Tasks");
-                });
-
-            modelBuilder.Entity("Orchestra.Models.BpmnProcessBaseline", b =>
-                {
-                    b.Navigation("SubProcesses");
                 });
 
             modelBuilder.Entity("Orchestra.Models.User", b =>

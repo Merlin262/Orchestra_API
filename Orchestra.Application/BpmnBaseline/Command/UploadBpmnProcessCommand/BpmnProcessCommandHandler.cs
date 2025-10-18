@@ -7,7 +7,7 @@ using System.Xml.Linq;
 
 namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
 {
-    public class BpmnProcessCommandHandler : IRequestHandler<BpmnProcessCommand, BpmnProcessBaseline>
+    public class BpmnProcessCommandHandler : IRequestHandler<BpmnProcessCommand, BpmnProcessResult>
     {
         private readonly IBpmnBaselineService _bpmnBaselineService;
 
@@ -16,7 +16,7 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
             _bpmnBaselineService = bpmnBaselineService;
         }
 
-        public async Task<BpmnProcessBaseline> Handle(BpmnProcessCommand request, CancellationToken cancellationToken)
+        public async Task<BpmnProcessResult> Handle(BpmnProcessCommand request, CancellationToken cancellationToken)
         {
             string xmlContent;
             using (var reader = new StreamReader(request.File.OpenReadStream()))
@@ -66,10 +66,21 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
 
             await ParseAndSaveSteps(xmlContent, process.Id, cancellationToken);
 
-            return process;
+            // Verifica se o processo possui subprocessos analisando o XML
+            bool hasSubProcess = _bpmnBaselineService.HasSubProcessInXml(xmlContent);
+            List<string> subProcessNames = _bpmnBaselineService.GetSubProcessNamesFromXml(xmlContent);
+
+            // Retorno do resultado com o campo HasSubProcess e nomes dos subprocessos
+            return new BpmnProcessResult
+            {
+                Process = process,
+                Items = null, // Preencha se necessário
+                HasSubProcess = hasSubProcess,
+                SubProcessNames = subProcessNames
+            };
         }
 
-        private Dictionary<string, List<string>> GetNextStepMap(XDocument xDoc, XNamespace bpmn)
+        public Dictionary<string, List<string>> GetNextStepMap(XDocument xDoc, XNamespace bpmn)
         {
             // Mapeia todos os sequenceFlows: sourceRef -> targetRef
             var sequenceFlows = xDoc.Descendants(bpmn + "sequenceFlow")
@@ -88,7 +99,7 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
             return nextStepMap;
         }
 
-        private Dictionary<string, List<string>> GetPreviousStepMap(XDocument xDoc, XNamespace bpmn)
+        public Dictionary<string, List<string>> GetPreviousStepMap(XDocument xDoc, XNamespace bpmn)
         {
             // Mapeia todos os sequenceFlows: targetRef -> sourceRef
             var sequenceFlows = xDoc.Descendants(bpmn + "sequenceFlow")

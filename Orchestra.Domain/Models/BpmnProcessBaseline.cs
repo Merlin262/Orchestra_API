@@ -1,4 +1,6 @@
-﻿namespace Orchestra.Models
+﻿using Orchestra.Domain.Models;
+
+namespace Orchestra.Models
 {
     public class BpmnProcessBaseline
     {
@@ -12,5 +14,6 @@
         public double Version { get; set; }
         public string? Description { get; set; }
         public bool IsActive { get; set; }
+        public List<SubProcess> SubProcesses { get; set; }
     }
 }

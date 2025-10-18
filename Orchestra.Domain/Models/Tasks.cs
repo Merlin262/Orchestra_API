@@ -1,5 +1,7 @@
-﻿using Orchestra.Enums;
+﻿using Orchestra.Domain.Models;
+using Orchestra.Enums;
 using Orchestra.Models.Orchestra.Models;
+using System.Text.Json.Serialization;
 
 namespace Orchestra.Models
 {
@@ -10,8 +12,10 @@ namespace Orchestra.Models
         public string? Description { get; set; }
         public string XmlTaskId { get; set; }
         public int BpmnProcessId { get; set; }
+        [JsonIgnore]
         public BpmnProcessInstance BpmnProcess { get; set; }
         public Guid ProcessStepId { get; set; }
+        [JsonIgnore]
         public ProcessStep ProcessStep { get; set; }
         public string? ResponsibleUserId { get; set; }
         public User ResponsibleUser { get; set; }
@@ -23,5 +27,8 @@ namespace Orchestra.Models
         public StatusEnum Status { get; set; }
         public string? Pool { get; set; }
         public DateTime? AssigmentAt { get; set; }
+        public Guid? SubProcessId { get; set; }
+        [JsonIgnore]
+        public SubProcess SubProcess { get; set; }
     }
 }

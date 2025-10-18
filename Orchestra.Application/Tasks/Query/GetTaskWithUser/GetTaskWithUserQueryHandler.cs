@@ -19,7 +19,9 @@ namespace Orchestra.Handler.Tasks.Query.GetTaskWithUser
 
         public async Task<List<TaskWithUserDto>> Handle(GetTaskWithUserQuery request, CancellationToken cancellationToken)
         {
-            return await _taskService.GetTasksForProcessInstanceAsync(request.ProcessInstanceId, cancellationToken);
+            var tasks = _taskService.GetTasksForProcessInstanceAsync(request.ProcessInstanceId, cancellationToken);
+
+            return await tasks;
         }
     }
 }

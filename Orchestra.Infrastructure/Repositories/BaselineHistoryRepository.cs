@@ -23,7 +23,7 @@ namespace Orchestra.Infrastructure.Repositories
         {
             return await _context.BaselineHistories
                 .AsNoTracking()
-                .Where(h => h.Id == baselineId)
+                .Where(h => h.BpmnProcessBaselineId == baselineId)
                 .ToListAsync(cancellationToken);
         }
 

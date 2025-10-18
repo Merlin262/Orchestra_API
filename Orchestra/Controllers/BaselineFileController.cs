@@ -68,7 +68,7 @@ namespace Orchestra.Controllers
                 new GetBaselineFilesByBaselineIdQuery(baselineId)
             );
             if (files == null || files.Count == 0)
-                return NotFound("Nenhum documento encontrado para esta baseline.");
+                return NoContent();
             return Ok(files);
         }
 
@@ -78,7 +78,7 @@ namespace Orchestra.Controllers
         {
             var result = await _mediator.Send(new GetBaselineFileContentQuery(id));
             if (result == null)
-                return NotFound("Arquivo não encontrado.");
+                return NoContent();
 
             return File(result.Content, result.ContentType, result.FileName);
         }

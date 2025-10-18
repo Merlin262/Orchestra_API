@@ -98,6 +98,7 @@ builder.Services.AddMediatR(cfg =>
 builder.Services.AddScoped<IBpmnProcessRepository, BpmnProcessRepository>();
 builder.Services.AddScoped<IBpmnProcessInstanceRepository, BpmnProcessInstanceRepository>();
 builder.Services.AddScoped<IProcessStepRepository, ProcessStepRepository>();
+builder.Services.AddScoped<ISubProcessRepository, SubProcessRepository>();
 builder.Services.AddScoped<ITasksRepository, TasksRepository>();
 builder.Services.AddScoped<IBpmnProcessBaselineRepository, BpmnProcessBaselineRepository>();
 builder.Services.AddScoped<IGenericRepository<BpmnProcessInstance>, GenericRepository<BpmnProcessInstance>>();

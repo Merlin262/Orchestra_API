@@ -49,5 +49,12 @@ namespace Orchestra.Repoitories
         {
             return await _context.Tasks.FirstOrDefaultAsync(t => t.Id == id, cancellationToken);
         }
+
+        public async Task<List<Tasks>> GetTasksWithSubProcessIdAsync(Guid subProcessId, int bpmnProcessId, CancellationToken cancellationToken = default)
+        {
+            return await _context.Tasks
+                .Where(t => t.SubProcessId == subProcessId && t.BpmnProcessId == bpmnProcessId)
+                .ToListAsync(cancellationToken);
+        }
     }
 }

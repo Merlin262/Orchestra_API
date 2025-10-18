@@ -1,4 +1,5 @@
-﻿using Orchestra.Domain.Services;
+﻿using Orchestra.Domain.Models;
+using Orchestra.Domain.Services;
 using Orchestra.Dtos;
 using Orchestra.Enums;
 using Orchestra.Infrastructure.Repositories;
@@ -7,6 +8,7 @@ using Orchestra.Models.Orchestra.Models;
 using Orchestra.Repoitories;
 using Orchestra.Repoitories.Interfaces;
 using Orchestra.Serviecs.Intefaces;
+using System.Threading;
 using System.Xml.Linq;
 
 namespace Orchestra.Services
@@ -131,7 +133,7 @@ namespace Orchestra.Services
             return (processSteps, stepMap);
         }
 
-        public async Task<List<Tasks>> ParseAndCreateTasksAsync(BpmnProcessInstance instance, string? xmlContent, Dictionary<string, ProcessStep> stepMap)
+        public async Task<List<Tasks>> ParseAndCreateTasksAsync(BpmnProcessInstance instance, string? xmlContent, Dictionary<string, ProcessStep> stepMap, CancellationToken cancellationToken)
         {
             var xDoc = XDocument.Parse(xmlContent ?? "");
             XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
@@ -172,9 +174,105 @@ namespace Orchestra.Services
                 {
                     await _taskService.SetTaskPoolAsync(task, xmlContent ?? "");
                 }
+
+                // Associar SubProcessId nas tasks conforme XmlTaskId
+                var baseline = await _baselineRepository.GetByIdAsync(instance.BpmnProcessBaselineId, default);
+                if (baseline != null && baseline.SubProcesses != null && baseline.SubProcesses.Count > 0)
+                {
+                    await SetSubProcessIdOnTasks(baseline.SubProcesses, tasks, instance.Id, cancellationToken);
+                }
             }
 
             return tasks;
+        }
+
+
+        //public static List<SubProcessTaskIdsResult> GetTaskIdsByProcessBaselineId(IEnumerable<SubProcess> subProcesses, int processBaselineId)
+        //{
+        //    var result = new List<SubProcessTaskIdsResult>();
+        //    var filtered = subProcesses.Where(sp => sp.ProcessBaselineId == processBaselineId);
+        //    foreach (var subProcess in filtered)
+        //    {
+        //        var taskIds = new List<string>();
+        //        if (!string.IsNullOrWhiteSpace(subProcess.XmlContent))
+        //        {
+        //            try
+        //            {
+        //                var xDoc = System.Xml.Linq.XDocument.Parse(subProcess.XmlContent);
+        //                var bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
+        //                var ns = System.Xml.Linq.XNamespace.Get(bpmn);
+        //                var taskElements = xDoc.Descendants(ns + "task").Concat(xDoc.Descendants(ns + "userTask"));
+        //                foreach (var element in taskElements)
+        //                {
+        //                    var id = element.Attribute("id")?.Value;
+        //                    if (!string.IsNullOrEmpty(id))
+        //                        taskIds.Add(id);
+        //                }
+        //            }
+        //            catch
+        //            {
+        //                // Ignora XML inválido
+        //            }
+        //        }
+        //        result.Add(new SubProcessTaskIdsResult
+        //        {
+        //            SubProcessId = subProcess.Id,
+        //            TaskIds = taskIds
+        //        });
+        //    }
+        //    return result;
+        //}
+
+        public async Task SetSubProcessIdOnTasks(IEnumerable<SubProcess> subProcesses, IEnumerable<Tasks> tasks, int bpmnProcessId, CancellationToken cancellationToken)
+        {
+            foreach (var subProcess in subProcesses)
+            {
+                var subProcessTasks = await _tasksRepository.GetTasksWithSubProcessIdAsync(subProcess.Id, bpmnProcessId, cancellationToken);
+
+                if (subProcessTasks.Count > 0 && subProcessTasks.All(t => t.SubProcessId != null))
+                {
+                    continue;
+                }
+
+                List<string> taskIds = new();
+
+                if (!string.IsNullOrWhiteSpace(subProcess.XmlContent))
+                {
+                    try
+                    {
+                        var xDoc = System.Xml.Linq.XDocument.Parse(subProcess.XmlContent);
+                        var bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
+                        var ns = System.Xml.Linq.XNamespace.Get(bpmn);
+                        var taskElements = xDoc.Descendants(ns + "task").Concat(xDoc.Descendants(ns + "userTask"));
+                        foreach (var element in taskElements)
+                        {
+                            var id = element.Attribute("id")?.Value;
+                            if (!string.IsNullOrEmpty(id))
+                                taskIds.Add(id);
+                        }
+                    }
+                    catch
+                    {
+                        // Se der erro, taskIds fica vazio e não associa nada
+                    }
+                }
+
+                foreach (var task in tasks)
+                {
+                    if (!string.IsNullOrEmpty(task.XmlTaskId) && taskIds.Contains(task.XmlTaskId))
+                    {
+                        task.SubProcessId = subProcess.Id;
+                        await _tasksRepository.UpdateAsync(task, cancellationToken);
+                    }
+                }
+            }
+        }
+
+
+        public class SubProcessTaskIdsResult
+        {
+            public Guid SubProcessId { get; set; }
+            public List<string> TaskIds { get; set; } = new();
         }
 
         public async Task<List<ProcessInstanceWithTasksDto>> GetProcessInstancesByResponsibleUserAsync(string userId, CancellationToken cancellationToken)
