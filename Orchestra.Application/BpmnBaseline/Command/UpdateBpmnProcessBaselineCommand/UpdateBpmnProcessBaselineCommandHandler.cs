@@ -1,11 +1,12 @@
 using MediatR;
 using Orchestra.Models;
+using Orchestra.Serviecs;
 using Orchestra.Serviecs.Intefaces;
 using System.Xml.Linq;
 
 namespace Orchestra.Handler.BpmnBaseline.Command.UpdateBpmnProcessBaselineCommand
 {
-    public class UpdateBpmnProcessBaselineCommandHandler : IRequestHandler<UpdateBpmnProcessBaselineCommand, BpmnProcessBaseline>
+    public class UpdateBpmnProcessBaselineCommandHandler : IRequestHandler<UpdateBpmnProcessBaselineCommand, UpdateBpmnProcessBaselineCommandResult>
     {
         private readonly IBpmnBaselineService _bpmnBaselineService;
 
@@ -14,7 +15,7 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UpdateBpmnProcessBaselineComman
             _bpmnBaselineService = bpmnBaselineService;
         }
 
-        public async Task<BpmnProcessBaseline> Handle(UpdateBpmnProcessBaselineCommand request, CancellationToken cancellationToken)
+        public async Task<UpdateBpmnProcessBaselineCommandResult> Handle(UpdateBpmnProcessBaselineCommand request, CancellationToken cancellationToken)
         {
             if (request.File == null || request.File.Length == 0)
                 return null!;
@@ -30,6 +31,9 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UpdateBpmnProcessBaselineComman
             }
 
             xmlContent = _bpmnBaselineService.FixDataObjectToDataObjectReference(xmlContent);
+
+            // Transforma associações
+            xmlContent = BpmnBaselineService.ConvertAssociationToDataOutputAssociation(xmlContent);
 
             string? processName = null;
             try
@@ -73,7 +77,19 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UpdateBpmnProcessBaselineComman
             };
             await _bpmnBaselineService.AddBaselineHistoryAsync(history, cancellationToken);
 
-            return existingBaseline;
+            await _bpmnBaselineService.ParseAndSaveStepsAsync(xmlContent, existingBaseline.Id, cancellationToken);
+
+            // Verifica se o processo possui subprocessos analisando o XML
+            bool hasSubProcess = _bpmnBaselineService.HasSubProcessInXml(xmlContent);
+            List<string> subProcessNames = _bpmnBaselineService.GetSubProcessNamesFromXml(xmlContent);
+
+            // Retorno do resultado com o campo HasSubProcess e nomes dos subprocessos
+            return new UpdateBpmnProcessBaselineCommandResult
+            {
+                Process = existingBaseline,
+                HasSubProcess = hasSubProcess,
+                SubProcessNames = subProcessNames
+            };
         }
     }
 }

@@ -4,7 +4,8 @@ using Microsoft.AspNetCore.Http;
 
 namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
 {
-    public class BpmnProcessCommand : IRequest<BpmnProcessBaseline>
+    // Altere o retorno para BpmnProcessResult
+    public class BpmnProcessCommand : IRequest<BpmnProcessResult>
     {
         public string UserId { get; set; }
         public IFormFile File { get; set; }

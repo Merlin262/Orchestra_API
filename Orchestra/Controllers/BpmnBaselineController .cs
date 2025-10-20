@@ -76,8 +76,8 @@ namespace Orchestra.Controllers
             var command = new DeleteBpmnProcessBaselineCommand(id);
             var result = await _mediator.Send(command, cancellationToken);
 
-            if (!result)
-                return NotFound();
+            if (!result.Success)
+                return BadRequest(result.ErrorMessage);
 
             return NoContent();
         }

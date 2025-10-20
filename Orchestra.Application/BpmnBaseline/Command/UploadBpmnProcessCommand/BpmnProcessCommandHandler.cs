@@ -7,7 +7,7 @@ using System.Xml.Linq;
 
 namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
 {
-    public class BpmnProcessCommandHandler : IRequestHandler<BpmnProcessCommand, BpmnProcessBaseline>
+    public class BpmnProcessCommandHandler : IRequestHandler<BpmnProcessCommand, BpmnProcessResult>
     {
         private readonly IBpmnBaselineService _bpmnBaselineService;
 
@@ -16,7 +16,7 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
             _bpmnBaselineService = bpmnBaselineService;
         }
 
-        public async Task<BpmnProcessBaseline> Handle(BpmnProcessCommand request, CancellationToken cancellationToken)
+        public async Task<BpmnProcessResult> Handle(BpmnProcessCommand request, CancellationToken cancellationToken)
         {
             string xmlContent;
             using (var reader = new StreamReader(request.File.OpenReadStream()))
@@ -66,10 +66,21 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
 
             await ParseAndSaveSteps(xmlContent, process.Id, cancellationToken);
 
-            return process;
+            // Verifica se o processo possui subprocessos analisando o XML
+            bool hasSubProcess = _bpmnBaselineService.HasSubProcessInXml(xmlContent);
+            List<string> subProcessNames = _bpmnBaselineService.GetSubProcessNamesFromXml(xmlContent);
+
+            // Retorno do resultado com o campo HasSubProcess e nomes dos subprocessos
+            return new BpmnProcessResult
+            {
+                Process = process,
+                Items = null, // Preencha se necessário
+                HasSubProcess = hasSubProcess,
+                SubProcessNames = subProcessNames
+            };
         }
 
-        private Dictionary<string, List<string>> GetNextStepMap(XDocument xDoc, XNamespace bpmn)
+        public Dictionary<string, List<string>> GetNextStepMap(XDocument xDoc, XNamespace bpmn)
         {
             // Mapeia todos os sequenceFlows: sourceRef -> targetRef
             var sequenceFlows = xDoc.Descendants(bpmn + "sequenceFlow")
@@ -88,7 +99,7 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
             return nextStepMap;
         }
 
-        private Dictionary<string, List<string>> GetPreviousStepMap(XDocument xDoc, XNamespace bpmn)
+        public Dictionary<string, List<string>> GetPreviousStepMap(XDocument xDoc, XNamespace bpmn)
         {
             // Mapeia todos os sequenceFlows: targetRef -> sourceRef
             var sequenceFlows = xDoc.Descendants(bpmn + "sequenceFlow")
@@ -114,8 +125,8 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
 
             var steps = new List<ProcessStep>();
 
-            // Lista de elementos de interesse (pode ser expandida)
-            var elementTypes = new[] { "startEvent", "task", "userTask", "scriptTask", "exclusiveGateway", "endEvent" };
+            // Lista de elementos de interesse (inclui callActivity para subprocessos)
+            var elementTypes = new[] { "startEvent", "task", "userTask", "scriptTask", "exclusiveGateway", "endEvent", "callActivity" };
 
             // Mapeia todos os elementos de interesse pelo id
             var elementIdToType = xDoc.Descendants()
@@ -136,6 +147,10 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
 
                 var nextStepIds = nextStepMap.ContainsKey(elementId) ? nextStepMap[elementId] : new List<string>();
                 var previousStepIds = previousStepMap.ContainsKey(elementId) ? previousStepMap[elementId] : new List<string>();
+                
+                // Define o tipo como "subprocesso" se for callActivity
+                var stepType = type == "callActivity" ? "subprocess" : type;
+                
                 // Para simplificação, salva apenas o primeiro NextStepId e o primeiro LastStepId (pode ser adaptado para múltiplos)
                 var step = new ProcessStep
                 {
@@ -144,7 +159,7 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
                     Name = element.Attribute("name")?.Value ?? type,
                     NextStepId = nextStepIds.FirstOrDefault(),
                     LastStepId = previousStepIds.FirstOrDefault(),
-                    Type = type,
+                    Type = stepType,
                     BpmnProcessId = bpmnProcessId
                 };
                 steps.Add(step);

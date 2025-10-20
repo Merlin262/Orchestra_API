@@ -1,4 +1,5 @@
-﻿using Orchestra.Domain.Services;
+﻿using Orchestra.Domain.Models;
+using Orchestra.Domain.Services;
 using Orchestra.Dtos;
 using Orchestra.Enums;
 using Orchestra.Infrastructure.Repositories;
@@ -7,6 +8,7 @@ using Orchestra.Models.Orchestra.Models;
 using Orchestra.Repoitories;
 using Orchestra.Repoitories.Interfaces;
 using Orchestra.Serviecs.Intefaces;
+using System.Threading;
 using System.Xml.Linq;
 
 namespace Orchestra.Services
@@ -102,7 +104,7 @@ namespace Orchestra.Services
             XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
             var processSteps = new List<ProcessStep>();
             var stepMap = new Dictionary<string, ProcessStep>();
-            var elementTypes = new[] { "startEvent", "task", "userTask", "scriptTask", "exclusiveGateway", "endEvent" };
+            var elementTypes = new[] { "startEvent", "task", "userTask", "scriptTask", "callActivity", "exclusiveGateway", "endEvent" };
 
             foreach (var type in elementTypes)
             {
@@ -131,12 +133,14 @@ namespace Orchestra.Services
             return (processSteps, stepMap);
         }
 
-        public async Task<List<Tasks>> ParseAndCreateTasksAsync(BpmnProcessInstance instance, string? xmlContent, Dictionary<string, ProcessStep> stepMap)
+        public async Task<List<Tasks>> ParseAndCreateTasksAsync(BpmnProcessInstance instance, string? xmlContent, Dictionary<string, ProcessStep> stepMap, CancellationToken cancellationToken)
         {
             var xDoc = XDocument.Parse(xmlContent ?? "");
             XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
             var tasks = new List<Tasks>();
-            var taskElements = xDoc.Descendants(bpmn + "task").Concat(xDoc.Descendants(bpmn + "userTask"));
+            var taskElements = xDoc.Descendants(bpmn + "task")
+                .Concat(xDoc.Descendants(bpmn + "userTask"))
+                .Concat(xDoc.Descendants(bpmn + "callActivity"));
             foreach (var element in taskElements)
             {
                 var bpmnId = element.Attribute("id")?.Value;
@@ -172,9 +176,70 @@ namespace Orchestra.Services
                 {
                     await _taskService.SetTaskPoolAsync(task, xmlContent ?? "");
                 }
+
+                // Associar SubProcessId nas tasks conforme XmlTaskId
+                var baseline = await _baselineRepository.GetByIdAsync(instance.BpmnProcessBaselineId, default);
+                if (baseline != null && baseline.SubProcesses != null && baseline.SubProcesses.Count > 0)
+                {
+                    await SetSubProcessIdOnTasks(baseline.SubProcesses, tasks, instance.Id, cancellationToken);
+                }
             }
 
             return tasks;
+        }
+
+        public async Task SetSubProcessIdOnTasks(IEnumerable<SubProcess> subProcesses, IEnumerable<Tasks> tasks, int bpmnProcessId, CancellationToken cancellationToken)
+        {
+            foreach (var subProcess in subProcesses)
+            {
+                var subProcessTasks = await _tasksRepository.GetTasksWithSubProcessIdAsync(subProcess.Id, bpmnProcessId, cancellationToken);
+
+                if (subProcessTasks.Count > 0 && subProcessTasks.All(t => t.SubProcessId != null))
+                {
+                    continue;
+                }
+
+                List<string> taskIds = new();
+
+                if (!string.IsNullOrWhiteSpace(subProcess.XmlContent))
+                {
+                    try
+                    {
+                        var xDoc = System.Xml.Linq.XDocument.Parse(subProcess.XmlContent);
+                        var bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
+                        var ns = System.Xml.Linq.XNamespace.Get(bpmn);
+                        var taskElements = xDoc.Descendants(ns + "task")
+                            .Concat(xDoc.Descendants(ns + "userTask"))
+                            .Concat(xDoc.Descendants(ns + "callActivity"));
+                        foreach (var element in taskElements)
+                        {
+                            var id = element.Attribute("id")?.Value;
+                            if (!string.IsNullOrEmpty(id))
+                                taskIds.Add(id);
+                        }
+                    }
+                    catch
+                    {
+                        // Se der erro, taskIds fica vazio e não associa nada
+                    }
+                }
+
+                foreach (var task in tasks)
+                {
+                    if (!string.IsNullOrEmpty(task.XmlTaskId) && taskIds.Contains(task.XmlTaskId))
+                    {
+                        task.SubProcessId = subProcess.Id;
+                        await _tasksRepository.UpdateAsync(task, cancellationToken);
+                    }
+                }
+            }
+        }
+
+
+        public class SubProcessTaskIdsResult
+        {
+            public Guid SubProcessId { get; set; }
+            public List<string> TaskIds { get; set; } = new();
         }
 
         public async Task<List<ProcessInstanceWithTasksDto>> GetProcessInstancesByResponsibleUserAsync(string userId, CancellationToken cancellationToken)

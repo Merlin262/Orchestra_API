@@ -4,7 +4,7 @@ using Orchestra.Models;
 
 namespace Orchestra.Handler.BpmnBaseline.Command.UpdateBpmnProcessBaselineCommand
 {
-    public class UpdateBpmnProcessBaselineCommand : IRequest<BpmnProcessBaseline>
+    public class UpdateBpmnProcessBaselineCommand : IRequest<UpdateBpmnProcessBaselineCommandResult>
     {
         public int Id { get; set; }
         public IFormFile File { get; set; }

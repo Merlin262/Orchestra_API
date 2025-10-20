@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Orchestra.Domain.Models;
 using Orchestra.Models;
 using Orchestra.Models.Orchestra.Models;
 
@@ -15,7 +16,8 @@ namespace Orchestra.Data.Context
         public DbSet<BaselineHistory> BaselineHistories => Set<BaselineHistory>();
         public DbSet<Role> Roles { get; set; }
         public DbSet<TaskFile> TaskFiles { get; set; }
-        public DbSet<BaselineFile> BaselineFiles { get; set; } // Adicionado para arquivos de baseline
+        public DbSet<BaselineFile> BaselineFiles { get; set; }
+        public DbSet<SubProcess> SubProcesses { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -46,6 +48,19 @@ namespace Orchestra.Data.Context
                 .WithMany()
                 .HasForeignKey(bf => bf.BaselineId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<SubProcess>()
+                .HasMany(s => s.Tasks)
+                .WithOne(t => t.SubProcess)
+                .HasForeignKey(t => t.SubProcessId)
+                .OnDelete(DeleteBehavior.Restrict); // ou .NoAction
+            
+            modelBuilder.Entity<SubProcess>()
+               .HasOne(sp => sp.BaselineHistory)
+               .WithMany()
+               .HasForeignKey(sp => sp.BaselineHistoryId)
+               .OnDelete(DeleteBehavior.NoAction); // Remove cascata
+
         }
 
     }

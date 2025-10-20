@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Orchestra.Data.Context;
 
@@ -11,9 +12,11 @@ using Orchestra.Data.Context;
 namespace Orchestra.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251018131344_addSubProcessBaselineVersion")]
+    partial class addSubProcessBaselineVersion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -27,9 +30,6 @@ namespace Orchestra.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<int>("BaselineHistoryId")
-                        .HasColumnType("int");
 
                     b.Property<double>("BaselineVersion")
                         .HasColumnType("float");
@@ -48,8 +48,6 @@ namespace Orchestra.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BaselineHistoryId");
 
                     b.HasIndex("ProcessBaselineId");
 
@@ -449,12 +447,6 @@ namespace Orchestra.Migrations
 
             modelBuilder.Entity("Orchestra.Domain.Models.SubProcess", b =>
                 {
-                    b.HasOne("Orchestra.Models.BaselineHistory", "BaselineHistory")
-                        .WithMany()
-                        .HasForeignKey("BaselineHistoryId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
                     b.HasOne("Orchestra.Models.BpmnProcessBaseline", "ProcessBaseline")
                         .WithMany("SubProcesses")
                         .HasForeignKey("ProcessBaselineId")
@@ -464,8 +456,6 @@ namespace Orchestra.Migrations
                     b.HasOne("Orchestra.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId");
-
-                    b.Navigation("BaselineHistory");
 
                     b.Navigation("ProcessBaseline");
 
