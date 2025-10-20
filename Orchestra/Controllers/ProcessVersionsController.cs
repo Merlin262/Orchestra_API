@@ -42,6 +42,12 @@ namespace Orchestra.Controllers
                 .OrderBy(h => h.Version)
                 .ToListAsync();
 
+            // SubProcesses - busca todos os subprocessos relacionados aos BaselineHistories
+            var baselineHistoryIds = baselineHistories.Select(h => h.Id).ToList();
+            var subProcesses = await _context.SubProcesses
+                .Where(sp => baselineHistoryIds.Contains(sp.BaselineHistoryId))
+                .ToListAsync();
+
             // Instâncias - busca por baselineId
             var instances = await _context.bpmnProcessInstances
                 .Where(i => i.BpmnProcessBaselineId == baselineId)
@@ -73,7 +79,18 @@ namespace Orchestra.Controllers
                     ChangeType = h.ChangeType,
                     Responsible = h.Responsible != null ? _context.Users.FirstOrDefault(u => u.Id == h.Responsible)?.FullName : null,
                     InstancesCount = instances.Count(i => i.version == h.Version),
-                    XmlContent = h.XmlContent
+                    XmlContent = h.XmlContent,
+                    SubProcesses = subProcesses
+                        .Where(sp => sp.BaselineHistoryId == h.Id)
+                        .Select(sp => new {
+                            Id = sp.Id,
+                            Name = sp.Name,
+                            XmlContent = sp.XmlContent,
+                            ProcessBaselineId = sp.ProcessBaselineId,
+                            UserId = sp.UserId,
+                            BaselineVersion = sp.BaselineVersion,
+                            BaselineHistoryId = sp.BaselineHistoryId
+                        }).ToList()
                 }).OrderBy(h => h.Version).ToList(),
                 ActiveInstances = activeInstances.Select(i => new {
                     Version = i.version,

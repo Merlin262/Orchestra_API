@@ -104,7 +104,7 @@ namespace Orchestra.Services
             XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
             var processSteps = new List<ProcessStep>();
             var stepMap = new Dictionary<string, ProcessStep>();
-            var elementTypes = new[] { "startEvent", "task", "userTask", "scriptTask", "exclusiveGateway", "endEvent" };
+            var elementTypes = new[] { "startEvent", "task", "userTask", "scriptTask", "callActivity", "exclusiveGateway", "endEvent" };
 
             foreach (var type in elementTypes)
             {
@@ -138,7 +138,9 @@ namespace Orchestra.Services
             var xDoc = XDocument.Parse(xmlContent ?? "");
             XNamespace bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
             var tasks = new List<Tasks>();
-            var taskElements = xDoc.Descendants(bpmn + "task").Concat(xDoc.Descendants(bpmn + "userTask"));
+            var taskElements = xDoc.Descendants(bpmn + "task")
+                .Concat(xDoc.Descendants(bpmn + "userTask"))
+                .Concat(xDoc.Descendants(bpmn + "callActivity"));
             foreach (var element in taskElements)
             {
                 var bpmnId = element.Attribute("id")?.Value;
@@ -186,43 +188,6 @@ namespace Orchestra.Services
             return tasks;
         }
 
-
-        //public static List<SubProcessTaskIdsResult> GetTaskIdsByProcessBaselineId(IEnumerable<SubProcess> subProcesses, int processBaselineId)
-        //{
-        //    var result = new List<SubProcessTaskIdsResult>();
-        //    var filtered = subProcesses.Where(sp => sp.ProcessBaselineId == processBaselineId);
-        //    foreach (var subProcess in filtered)
-        //    {
-        //        var taskIds = new List<string>();
-        //        if (!string.IsNullOrWhiteSpace(subProcess.XmlContent))
-        //        {
-        //            try
-        //            {
-        //                var xDoc = System.Xml.Linq.XDocument.Parse(subProcess.XmlContent);
-        //                var bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
-        //                var ns = System.Xml.Linq.XNamespace.Get(bpmn);
-        //                var taskElements = xDoc.Descendants(ns + "task").Concat(xDoc.Descendants(ns + "userTask"));
-        //                foreach (var element in taskElements)
-        //                {
-        //                    var id = element.Attribute("id")?.Value;
-        //                    if (!string.IsNullOrEmpty(id))
-        //                        taskIds.Add(id);
-        //                }
-        //            }
-        //            catch
-        //            {
-        //                // Ignora XML inválido
-        //            }
-        //        }
-        //        result.Add(new SubProcessTaskIdsResult
-        //        {
-        //            SubProcessId = subProcess.Id,
-        //            TaskIds = taskIds
-        //        });
-        //    }
-        //    return result;
-        //}
-
         public async Task SetSubProcessIdOnTasks(IEnumerable<SubProcess> subProcesses, IEnumerable<Tasks> tasks, int bpmnProcessId, CancellationToken cancellationToken)
         {
             foreach (var subProcess in subProcesses)
@@ -243,7 +208,9 @@ namespace Orchestra.Services
                         var xDoc = System.Xml.Linq.XDocument.Parse(subProcess.XmlContent);
                         var bpmn = "http://www.omg.org/spec/BPMN/20100524/MODEL";
                         var ns = System.Xml.Linq.XNamespace.Get(bpmn);
-                        var taskElements = xDoc.Descendants(ns + "task").Concat(xDoc.Descendants(ns + "userTask"));
+                        var taskElements = xDoc.Descendants(ns + "task")
+                            .Concat(xDoc.Descendants(ns + "userTask"))
+                            .Concat(xDoc.Descendants(ns + "callActivity"));
                         foreach (var element in taskElements)
                         {
                             var id = element.Attribute("id")?.Value;

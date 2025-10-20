@@ -125,8 +125,8 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
 
             var steps = new List<ProcessStep>();
 
-            // Lista de elementos de interesse (pode ser expandida)
-            var elementTypes = new[] { "startEvent", "task", "userTask", "scriptTask", "exclusiveGateway", "endEvent" };
+            // Lista de elementos de interesse (inclui callActivity para subprocessos)
+            var elementTypes = new[] { "startEvent", "task", "userTask", "scriptTask", "exclusiveGateway", "endEvent", "callActivity" };
 
             // Mapeia todos os elementos de interesse pelo id
             var elementIdToType = xDoc.Descendants()
@@ -147,6 +147,10 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
 
                 var nextStepIds = nextStepMap.ContainsKey(elementId) ? nextStepMap[elementId] : new List<string>();
                 var previousStepIds = previousStepMap.ContainsKey(elementId) ? previousStepMap[elementId] : new List<string>();
+                
+                // Define o tipo como "subprocesso" se for callActivity
+                var stepType = type == "callActivity" ? "subprocess" : type;
+                
                 // Para simplificação, salva apenas o primeiro NextStepId e o primeiro LastStepId (pode ser adaptado para múltiplos)
                 var step = new ProcessStep
                 {
@@ -155,7 +159,7 @@ namespace Orchestra.Handler.BpmnBaseline.Command.UploadBpmnProcessCommand
                     Name = element.Attribute("name")?.Value ?? type,
                     NextStepId = nextStepIds.FirstOrDefault(),
                     LastStepId = previousStepIds.FirstOrDefault(),
-                    Type = type,
+                    Type = stepType,
                     BpmnProcessId = bpmnProcessId
                 };
                 steps.Add(step);

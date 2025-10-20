@@ -198,14 +198,14 @@ namespace Orchestra.Controllers
 
             foreach (var gateway in gateways)
             {
-                var previousSteps = steps.Where(s => s.NextStepId == gateway.BpmnId && (s.Type == "task" || s.Type == "userTask")).ToList();
+                var previousSteps = steps.Where(s => s.NextStepId == gateway.BpmnId && (s.Type == "task" || s.Type == "userTask" || s.Type == "subprocess")).ToList();
                 var previousTasks = tasks.Where(t => previousSteps.Any(ps => ps.BpmnId == t.XmlTaskId) && t.Status == StatusEnum.Finished).ToList();
                 if (!previousTasks.Any())
                     continue;
 
                 isCompleted = true;
 
-                var nextSteps = steps.Where(s => s.LastStepId == gateway.BpmnId && (s.Type == "task" || s.Type == "userTask")).ToList();
+                var nextSteps = steps.Where(s => s.LastStepId == gateway.BpmnId && (s.Type == "task" || s.Type == "userTask" || s.Type == "subprocess")).ToList();
                 var options = new List<object>();
                 var allPathIds = new List<HashSet<string>>();
 
@@ -214,7 +214,7 @@ namespace Orchestra.Controllers
                 {
                     var pathIds = new HashSet<string>();
                     var currentStep = startStep;
-                    while (currentStep != null && (currentStep.Type == "task" || currentStep.Type == "userTask"))
+                    while (currentStep != null && (currentStep.Type == "task" || currentStep.Type == "userTask" || currentStep.Type == "subprocess"))
                     {
                         if (pathIds.Contains(currentStep.BpmnId)) break;
                         pathIds.Add(currentStep.BpmnId);
