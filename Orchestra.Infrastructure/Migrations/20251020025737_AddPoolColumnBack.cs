@@ -10,11 +10,11 @@ namespace Orchestra.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<string>(
-                name: "Pool",
-                table: "Tasks",
-                type: "nvarchar(100)",
-                nullable: true);
+            //migrationBuilder.AddColumn<string>(
+            //    name: "Pool",
+            //    table: "Tasks",
+            //    type: "nvarchar(100)",
+            //    nullable: true);
         }
 
         /// <inheritdoc />
