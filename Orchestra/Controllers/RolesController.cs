@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Orchestra.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class RolesController : ControllerBase

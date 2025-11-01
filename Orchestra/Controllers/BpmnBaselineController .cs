@@ -16,7 +16,7 @@ using System.Xml.Linq;
 
 namespace Orchestra.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class BpmnController : ControllerBase

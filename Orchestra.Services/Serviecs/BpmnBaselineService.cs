@@ -147,10 +147,8 @@ namespace Orchestra.Serviecs
         {
             var doc = XDocument.Parse(xmlContent, LoadOptions.PreserveWhitespace | LoadOptions.SetLineInfo);
 
-            // Namespace BPMN (assume que o namespace padrão do root é o BPMN model namespace)
             XNamespace bpmn = doc.Root.GetDefaultNamespace();
 
-            // Coleta todas as associations existentes (em lista para evitar alteração durante iteração)
             var associations = doc.Descendants(bpmn + "association").ToList();
 
             foreach (var assoc in associations)
@@ -159,47 +157,122 @@ namespace Orchestra.Serviecs
                 string sourceRef = (string)assoc.Attribute("sourceRef");
                 string targetRef = (string)assoc.Attribute("targetRef");
 
-                // monta o novo elemento dataOutputAssociation com o MESMO id (importante para preservar DI)
-                var dataOutput = new XElement(bpmn + "dataOutputAssociation",
-                    new XAttribute("id", assocId)
-                );
+                // Verifica se sourceRef é um DataObject, DataObjectReference ou DataStoreReference
+                var sourceIsDataObject = doc.Descendants()
+                    .Any(e => (e.Name.LocalName == "dataObject" 
+                              || e.Name.LocalName == "dataObjectReference"
+                              || e.Name.LocalName == "dataStoreReference") 
+                              && (string)e.Attribute("id") == sourceRef);
 
-                // adiciona sourceRef/targetRef como nós filhos (formato aceito pelos viewers)
-                if (!string.IsNullOrEmpty(sourceRef))
-                    dataOutput.Add(new XElement(bpmn + "sourceRef", sourceRef));
-                if (!string.IsNullOrEmpty(targetRef))
-                    dataOutput.Add(new XElement(bpmn + "targetRef", targetRef));
+                // Verifica se targetRef é um DataObject, DataObjectReference ou DataStoreReference
+                var targetIsDataObject = doc.Descendants()
+                    .Any(e => (e.Name.LocalName == "dataObject" 
+                              || e.Name.LocalName == "dataObjectReference"
+                              || e.Name.LocalName == "dataStoreReference") 
+                              && (string)e.Attribute("id") == targetRef);
 
-                // Se a association tinha extensionElements, copie para o novo elemento
-                var ext = assoc.Elements().FirstOrDefault(e => e.Name.LocalName == "extensionElements");
-                if (ext != null)
+                XElement targetElement = null;
+                XElement newAssociation = null;
+
+                // CASO 1: DataObject/DataStoreReference -> Task (dataInputAssociation dentro da task)
+                if (sourceIsDataObject && !string.IsNullOrEmpty(targetRef))
                 {
-                    // clone extensionElements (mantém conteúdo)
-                    dataOutput.Add(new XElement(ext));
+                    // Busca o elemento de destino (task, userTask, etc)
+                    targetElement = doc.Descendants()
+                        .FirstOrDefault(e => (e.Name.LocalName == "task" 
+                                            || e.Name.LocalName == "userTask" 
+                                            || e.Name.LocalName == "serviceTask"
+                                            || e.Name.LocalName == "scriptTask"
+                                            || e.Name.LocalName == "manualTask"
+                                            || e.Name.LocalName == "businessRuleTask"
+                                            || e.Name.LocalName == "sendTask"
+                                            || e.Name.LocalName == "receiveTask")
+                                            && (string)e.Attribute("id") == targetRef);
+
+                    if (targetElement != null)
+                    {
+                        // Cria dataInputAssociation
+                        newAssociation = new XElement(bpmn + "dataInputAssociation",
+                            new XAttribute("id", assocId)
+                        );
+
+                        // sourceRef é o DataObject/DataStoreReference
+                        newAssociation.Add(new XElement(bpmn + "sourceRef", sourceRef));
+                        
+                        // targetRef é a propriedade/campo da task (opcional)
+                        if (!string.IsNullOrEmpty(targetRef))
+                            newAssociation.Add(new XElement(bpmn + "targetRef", targetRef));
+                    }
+                }
+                // CASO 2: Task -> DataObject/DataStoreReference (dataOutputAssociation dentro da task)
+                else if (targetIsDataObject && !string.IsNullOrEmpty(sourceRef))
+                {
+                    // Busca a task de origem
+                    targetElement = doc.Descendants()
+                        .FirstOrDefault(e => (e.Name.LocalName == "task" 
+                                            || e.Name.LocalName == "userTask" 
+                                            || e.Name.LocalName == "serviceTask"
+                                            || e.Name.LocalName == "scriptTask"
+                                            || e.Name.LocalName == "manualTask"
+                                            || e.Name.LocalName == "businessRuleTask"
+                                            || e.Name.LocalName == "sendTask"
+                                            || e.Name.LocalName == "receiveTask")
+                                            && (string)e.Attribute("id") == sourceRef);
+
+                    if (targetElement != null)
+                    {
+                        // Cria dataOutputAssociation
+                        newAssociation = new XElement(bpmn + "dataOutputAssociation",
+                            new XAttribute("id", assocId)
+                        );
+
+                        // sourceRef é a propriedade/campo da task (opcional)
+                        if (!string.IsNullOrEmpty(sourceRef))
+                            newAssociation.Add(new XElement(bpmn + "sourceRef", sourceRef));
+                        
+                        // targetRef é o DataObject/DataStoreReference
+                        newAssociation.Add(new XElement(bpmn + "targetRef", targetRef));
+                    }
                 }
 
-                // tenta localizar a task cujo id == sourceRef
-                XElement task = null;
-                if (!string.IsNullOrEmpty(sourceRef))
+                // Se encontrou um elemento de destino e criou a nova associação
+                if (targetElement != null && newAssociation != null)
                 {
-                    task = doc.Descendants(bpmn + "task")
-                              .FirstOrDefault(t => (string)t.Attribute("id") == sourceRef);
-                }
+                    // Copia extensionElements se existir
+                    var ext = assoc.Elements().FirstOrDefault(e => e.Name.LocalName == "extensionElements");
+                    if (ext != null)
+                    {
+                        newAssociation.Add(new XElement(ext));
+                    }
 
-                if (task != null)
-                {
-                    // evita duplicidade de id dentro da task
-                    bool alreadyHas = task.DescendantsAndSelf().Any(e => (string)e.Attribute("id") == assocId);
+                    // Evita duplicidade de id dentro do elemento
+                    bool alreadyHas = targetElement.DescendantsAndSelf().Any(e => (string)e.Attribute("id") == assocId);
                     if (!alreadyHas)
                     {
-                        task.Add(dataOutput);
+                        targetElement.Add(newAssociation);
                     }
-                    // remove a antiga association (no nível do processo)
+
+                    // Remove a antiga association
                     assoc.Remove();
                 }
                 else
                 {
-                    // se não encontrou a task, substitui a association no mesmo lugar por dataOutputAssociation
+                    // Se não conseguiu processar, mantém como dataOutputAssociation (comportamento anterior)
+                    var dataOutput = new XElement(bpmn + "dataOutputAssociation",
+                        new XAttribute("id", assocId)
+                    );
+
+                    if (!string.IsNullOrEmpty(sourceRef))
+                        dataOutput.Add(new XElement(bpmn + "sourceRef", sourceRef));
+                    if (!string.IsNullOrEmpty(targetRef))
+                        dataOutput.Add(new XElement(bpmn + "targetRef", targetRef));
+
+                    var ext = assoc.Elements().FirstOrDefault(e => e.Name.LocalName == "extensionElements");
+                    if (ext != null)
+                    {
+                        dataOutput.Add(new XElement(ext));
+                    }
+
                     assoc.ReplaceWith(dataOutput);
                 }
             }

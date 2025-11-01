@@ -11,10 +11,12 @@ using MediatR;
 using Orchestra.Application.BaselineFile.Query;
 using Orchestra.Application.BaselineFile.Query.GetBaselineFileContent;
 using Orchestra.Application.BaselineFile.Query.GetBaselineFilesByBaselineId;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Orchestra.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class BaselineFileController : ControllerBase
     {

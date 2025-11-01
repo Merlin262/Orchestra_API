@@ -10,9 +10,11 @@ using Orchestra.Data.Context;
 using Orchestra.Domain.Models;
 using Orchestra.Application.BpmnSubProcess.Commands;
 using Orchestra.DTOs;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Orchestra.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class SubProcessesController : ControllerBase
