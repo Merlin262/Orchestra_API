@@ -19,7 +19,7 @@ using Orchestra.Enums;
 
 namespace Orchestra.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class TasksController : ControllerBase
