@@ -162,7 +162,7 @@ namespace Orchestra.Controllers
         {
             var result = await _mediator.Send(new GetProcessInstancesByResponsibleUserQuery(userId));
             if (result == null || !result.Any())
-                return NotFound();
+                return NoContent();
             return Ok(result);
         }
 

@@ -163,7 +163,7 @@ namespace Orchestra.Controllers
             var result = await _mediator.Send(query, cancellationToken);
 
             if (result == null || result.Count == 0)
-                return NotFound("Nenhuma task encontrada para esse processo.");
+                return NoContent();
 
             // Log e notificação SignalR
             _logger.LogInformation("Enviando evento SignalR UserProcessInstancesFetched: UserId={UserId}, InstancesCount={Count}", userId, result.Count);
