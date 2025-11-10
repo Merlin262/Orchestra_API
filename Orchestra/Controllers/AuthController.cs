@@ -53,7 +53,7 @@ namespace Orchestra.Controllers
         }
 
         [HttpGet("me")]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> Me()
         {
             var authHeader = Request.Headers["Authorization"].FirstOrDefault();
